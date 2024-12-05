@@ -20,3 +20,7 @@ ODS checks are:
 The only method is "ods_engine" (from odsutils import ods_engine) and the only script is "odsuser.py".
 
 Standard pip install.
+
+The ODS system was developed by NRAO with support from the National Science Foundation's grants:
+SII NRDZ: Dynamic Protection and Spectrum Monitoring for Radio Observatories (AST-2232159),
+SWIFT-SAT: Observational Data Sharing (AST-2332422)
