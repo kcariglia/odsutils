@@ -225,9 +225,28 @@ class ODS:
         for _, row in obs_list.iterrows():
             self.append_new_record(**row.to_dict())
 
-    def view_ods(self):
+    def view_ods(self, order=['src_id', 'src_start_utc', 'src_end_utc']):
+        """
+        Parameter
+        ---------
+        order : list
+            First entries in table
+        """
         from tabulate import tabulate
-        print("View it...")
+        data = []
+        for key in order:
+            row = [key]
+            for entry in self.ods:
+                row.append(entry[key])
+            data.append(row)
+        for key in self.ods_fields:
+            if key in order:
+                continue
+            row = [key]
+            for entry in self.ods:
+                row.append(entry[key])
+            data.append(row)
+        print(tabulate(data))
 
     def write_ods(self, file_name):
         ods2write = {'ods_data': self.ods}
