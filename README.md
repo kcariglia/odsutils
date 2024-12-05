@@ -21,6 +21,16 @@ The only method is "ods_engine" (from odsutils import ods_engine) and the only s
 
 Standard pip install.
 
+The presumed workflow (as shown in odsuder.py and can be done in one call) is:
+1 - read in an existing ODS file
+2 - set the defaults you want (either a json file with default values or ':from_ods')
+3 - remove entries before a time (likely 'now')
+4 - add entries from a data file or can add on command line
+5 - write the new ods file (give same filename to overwrite)
+
+E.g.
+odsuser.py -o ods_ata.json -d :from_ods -f obs.txt -i -t -w ods_new.json
+
 The ODS system was developed by NRAO with support from the National Science Foundation's grants:
 SII NRDZ: Dynamic Protection and Spectrum Monitoring for Radio Observatories (AST-2232159),
 SWIFT-SAT: Observational Data Sharing (AST-2332422)

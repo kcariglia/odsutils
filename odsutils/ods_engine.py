@@ -135,9 +135,9 @@ class ODS:
             is_valid = self.check_ods_record(rec, ctr)
             if is_valid:
                 self.valid_records.append(ctr)
-        self.number_of_records = ctr + 1
+        self.number_of_records = len(self.ods)
 
-    def get_defaults_dict(self, defaults=':single_valued'):
+    def get_defaults_dict(self, defaults=':from_ods'):
         """
         Parameter
         ---------
@@ -145,7 +145,7 @@ class ODS:
             ods record default values (keys are ods_fields)
             - dict provides the actual default key/value pairs
             - str 
-              (a) if starts with ':', uses "special case" of the single_valued input sets (can add options...)
+              (a) if starts with ':', uses "special case" of the from_ods input sets (can add options...)
               (b) is a filename with the defaults as a json
                   if there is a ':', then it is that filename preceding and the key after the :
         
@@ -163,8 +163,8 @@ class ODS:
         elif isinstance(defaults, str):
             using_from = defaults
             if defaults[0] == ':':
-                if defaults[1:] == 'single_valued':
-                    self._single_valued_defaults()
+                if defaults[1:] == 'from_ods':
+                    self._from_ods_defaults()
                 else:
                     print(f"Not valid default case: {defaults}")
             else:
@@ -177,7 +177,7 @@ class ODS:
         for key, val in self.defaults.items():
             print(f"\t{key:26s}  {val}")
 
-    def _single_valued_defaults(self):
+    def _from_ods_defaults(self):
         self.defaults = {}
         for key, val in self.input_ods_sets.items():
             if len(val) == 1:
@@ -285,7 +285,7 @@ class ODS:
             ods record default values (keys are ods_fields)
             - dict provides the actual default key/value pairs
             - str 
-              (a) if starts with ':', uses "special case" of the single_valued input sets (can add options...)
+              (a) if starts with ':', uses "special case" of the from_ods input sets (can add options...)
               (b) is a filename with the defaults as a json
                   if there is a ':', then it is that filename preceding and the key after the :
         sep : str
