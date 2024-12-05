@@ -210,7 +210,7 @@ class ODS:
         Remove entries that fail validity check.
 
         """
-        print("Culling ODS of invalid records")
+        print("Culling ODS for invalid records")
         self.check_ods()
         if len(self.valid_records) == self.number_of_records:
             return
