@@ -111,11 +111,12 @@ class ODS:
             if key not in rec:
                 print(f"Missing {key} {ending}")
                 is_valid = False
-            try:
-                _ = self.ods_fields[key](rec[key])
-            except ValueError:
-                print(f"{rec[key]} is wrong type for {key} {ending}")
-                is_valid = False
+            if rec[key] is not None:
+                try:
+                    _ = self.ods_fields[key](rec[key])
+                except ValueError:
+                    print(f"{rec[key]} is wrong type for {key} {ending}")
+                    is_valid = False
         return is_valid
 
     def check_ods(self):
