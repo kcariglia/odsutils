@@ -46,6 +46,14 @@ class ODS:
         ods_file_name : str
             Name of ods json file
 
+        Attributes
+        ----------
+        ods_file_name : str
+            The supplied ods file name
+        ods : list
+            List of ods records that is manipulated
+        see self.check_ods/self._gen_input_sets for others
+
         """
         self.ods_file_name = ods_file_name
         with open(self.ods_file_name, 'r') as fp:
@@ -59,6 +67,12 @@ class ODS:
         self._gen_input_sets()
 
     def _gen_input_sets(self):
+        """
+        Attribute
+        ---------
+        input_ods_sets : dict
+            Dictionary of ods sets
+        """
         self.input_ods_sets = {}  # Pull apart the existing ods to get unique value sets
         for irec in self.valid_records:
             for key, val in self.ods[irec].items():
@@ -67,7 +81,20 @@ class ODS:
 
     def check_ods_record(self, rec, ctr=None):
         """
-        Checks a single ods record.
+        Checks a single ods record.  Doesn't check type.
+
+        Parameters
+        ----------
+        rec : dict
+            An ods record
+        ctr : int or None
+            If supplied, a counter of which record for printing
+        
+        Return
+        ----------
+        bool
+            Is the record a valid ods record
+
         """
         is_valid = True
         for key in rec:
@@ -122,6 +149,11 @@ class ODS:
               (a) if starts with ':', uses "special case" of the single_valued input sets (can add options...)
               (b) is a filename with the defaults as a json
                   if there is a ':', then it is that filename preceding and the key after the :
+        
+        Attribute
+        ---------
+        defaults : dict
+            Dictionary containing whatever ods records defaults are provided.
 
         """
         if defaults is None:
@@ -154,7 +186,7 @@ class ODS:
 
     def cull_ods_by_time(self, cull_time='now'):
         """
-        Remove entries with end times before cull_time.
+        Remove entries with end times before cull_time.  Overwrites self.ods.
 
         """
         if cull_time == 'now':
@@ -178,6 +210,11 @@ class ODS:
         init_value : anything
             Whatever you want, however, if a dict, it will assume the dict has ods_field values to use and others set to None
 
+        Return
+        ------
+        dict
+            A new ods record
+
         """
         rec = {}
         for key in self.ods_fields:
@@ -191,6 +228,11 @@ class ODS:
         return rec
 
     def append_new_record_from_Namespace(self, ns):
+        """
+        Appends a new ods record to self.ods supplied as a Namespace
+        Between defaults and kwargs, must be complete ods record.
+
+        """
         kwargs = {}
         for key, val in vars(ns):
             if key in self.ods_fields:
@@ -199,7 +241,8 @@ class ODS:
 
     def append_new_record(self, **kwargs):
         """
-        Append a new record to the ods, using defaults then kwargs
+        Append a new record to self.ods, using defaults then kwargs.
+        Between defaults and kwargs, must be complete ods record.
 
         """
         new_rec = self.new_record(self.defaults)
@@ -212,7 +255,23 @@ class ODS:
 
     def update_from_file(self, data_file_name, defaults=None, sep="\s+"):
         """
-        Append new records from a data file.
+        Append new records from a data file to self.ods
+        Assumes the first line is a header containing the exact ods entry names.
+        Between defaults and data in file, must be a complete ods record.
+
+        Parameters
+        ----------
+        data_file_name : str
+            Name of input data file.
+        defaults : dict, str
+            ods record default values (keys are ods_fields)
+            - dict provides the actual default key/value pairs
+            - str 
+              (a) if starts with ':', uses "special case" of the single_valued input sets (can add options...)
+              (b) is a filename with the defaults as a json
+                  if there is a ':', then it is that filename preceding and the key after the :
+        sep : str
+            separator
 
         """
         import pandas as pd
@@ -227,10 +286,12 @@ class ODS:
 
     def view_ods(self, order=['src_id', 'src_start_utc', 'src_end_utc']):
         """
+        View the ods as a table.  If more than ~5, this gets too wide...
+
         Parameter
         ---------
         order : list
-            First entries in table
+            First entries in table, rest of ods record values are append afterwards.
         """
         from tabulate import tabulate
         data = []
@@ -249,6 +310,15 @@ class ODS:
         print(tabulate(data))
 
     def write_ods(self, file_name):
+        """
+        Export the ods to a json file.
+
+        Parameter
+        ---------
+        file_name : str
+            Name of ods json file to write
+
+        """
         ods2write = {'ods_data': self.ods}
         with open(file_name, 'w') as fp:
             json.dump(ods2write, fp, indent=2)
