@@ -30,6 +30,7 @@ The presumed workflow (as shown in odsuder.py and can be done in one call) is:
 
 E.g.
 odsuser.py -o ods_ata.json -d :from_ods -f obs.txt -i -t now -w ods_new.json
+odsuser.py -o ods_ata.json -d sites.json:ata -f obs.txt -i -t now -w ods_new.json
 
 The ODS system was developed by NRAO with support from the National Science Foundation's grants:
 SII NRDZ: Dynamic Protection and Spectrum Monitoring for Radio Observatories (AST-2232159),
