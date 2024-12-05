@@ -1,3 +1,4 @@
+#! /usr/bin/env python
 import argparse
 from odsutils import ods_engine
 
@@ -10,6 +11,7 @@ ap.add_argument('-c', '--cull', help="Cull existing ods file on time - 'now' or 
 ap.add_argument('-i', '--invalid', help="Cull ods of invalid entries", action='store_true')
 ap.add_argument('-w', '--write', help="Write ods to this file name", default=False)
 ap.add_argument('-v', '--view', help="View ods", action='store_true')
+ap.add_argument('-s', '--std_show', help="Show the tems of an ODS record", action='store_true')
 # ODS fields
 ap.add_argument('--site_id', help="ODS field", default=None)
 ap.add_argument('--site_lat_deg', help="ODS field", default=None)
@@ -33,6 +35,8 @@ ap.add_argument('--notes', help="ODS field", default=None)
 args = ap.parse_args()
 
 ods = ods_engine.ODS()
+if args.std_show:
+    ods.std()
 if args.ods_file:
     ods.read_ods(ods_file_name=args.ods_file)
     if args.defaults is None:

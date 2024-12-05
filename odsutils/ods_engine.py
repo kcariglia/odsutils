@@ -333,10 +333,10 @@ class ODS:
 
         """
         from tabulate import tabulate
-        data = [['key', 'type']]
+        data = []
         for key, val in self.ods_fields.items():
             data.append([key, val])
-        print(data)
+        print(tabulate(data, headers=['key', 'type']))
 
     def write_ods(self, file_name):
         """
