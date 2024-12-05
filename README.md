@@ -32,6 +32,10 @@ E.g.
 odsuser.py -o ods_ata.json -d :from_ods -f obs.txt -i -t now -w ods_new.json
 odsuser.py -d sites.json:ata -f obs.txt -i -t now -w ods_new.json
 
+ACKNOWLEDGEMENTS
+This software was developed with support from the National Science Foundation:
+SII-NRDZ: Radio Astronomy Dynamic Satellite Inteference-Mitigation and Spectrum Sharing (RADYSISS) (AST-2232368)
+
 The ODS system was developed by NRAO with support from the National Science Foundation's grants:
 SII NRDZ: Dynamic Protection and Spectrum Monitoring for Radio Observatories (AST-2232159),
 SWIFT-SAT: Observational Data Sharing (AST-2332422)
