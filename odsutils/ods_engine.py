@@ -68,12 +68,14 @@ class ODS:
 
     def _gen_input_sets(self):
         """
+        Pull apart the existing valid ods records to get unique value sets
+
         Attribute
         ---------
         input_ods_sets : dict
             Dictionary of ods sets
         """
-        self.input_ods_sets = {}  # Pull apart the existing ods to get unique value sets
+        self.input_ods_sets = {}  # 
         for irec in self.valid_records:
             for key, val in self.ods[irec].items():
                 self.input_ods_sets.setdefault(key, set())
@@ -81,7 +83,7 @@ class ODS:
 
     def check_ods_record(self, rec, ctr=None):
         """
-        Checks a single ods record.  Doesn't check type.
+        Checks a single ods record.
 
         Parameters
         ----------
@@ -196,6 +198,11 @@ class ODS:
         """
         Remove entries with end times before cull_time.  Overwrites self.ods.
 
+        Parameter
+        ---------
+        cull_time : str
+            isoformat time string
+
         """
         if cull_time == 'now':
             cull_time = Time.now()
@@ -208,6 +215,18 @@ class ODS:
             if end_time > cull_time:
                 culled_ods.append(rec)
         self.ods = copy(culled_ods)
+
+    def cull_ods_by_invalid(self):
+        """
+        Remove entries that fail validity check.
+
+        """
+        print("Culling ODS of invalid records")
+        self.check_ods()
+        culled_ods = []
+        for irec in self.valid_records:
+            culled_ods.append(copy(self.ods[irec]))
+        self.ods = culled_ods
 
     def new_record(self, init_value=None):
         """
