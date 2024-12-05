@@ -246,19 +246,19 @@ class ODS:
                 rec[key] = init_value
         return rec
 
-    def append_new_record_from_Namespace(self, ns):
+    def append_new_record_from_Namespace(self, ns, override=False):
         """
         Appends a new ods record to self.ods supplied as a Namespace
         Between defaults and kwargs, must be complete ods record.
 
         """
         kwargs = {}
-        for key, val in vars(ns):
+        for key, val in vars(ns).items():
             if key in self.ods_fields:
                 kwargs[key] = val
-        self.append_new_record(**kwargs)
+        self.append_new_record(override=override, **kwargs)
 
-    def append_new_record(self, **kwargs):
+    def append_new_record(self, override=False, **kwargs):
         """
         Append a new record to self.ods, using defaults then kwargs.
         Between defaults and kwargs, must be complete ods record.
@@ -267,12 +267,12 @@ class ODS:
         new_rec = self.new_record(self.defaults)
         new_rec.update(kwargs)
         is_valid = self.check_ods_record(new_rec)
-        if is_valid:
+        if is_valid or override:
             self.ods.append(new_rec)
         else:
             print("Not adding record.")
 
-    def update_from_file(self, data_file_name, defaults=None, sep="\s+"):
+    def update_from_file(self, data_file_name, defaults=None, override=False, sep="\s+"):
         """
         Append new records from a data file to self.ods
         Assumes the first line is a header containing the exact ods entry names.
@@ -289,6 +289,8 @@ class ODS:
               (a) if starts with ':', uses "special case" of the from_ods input sets (can add options...)
               (b) is a filename with the defaults as a json
                   if there is a ':', then it is that filename preceding and the key after the :
+        override : bool
+            add record regardless of passing ods checking
         sep : str
             separator
 
@@ -301,7 +303,7 @@ class ODS:
         obs_list.columns = obs_list.columns.str.replace("#", "")
 
         for _, row in obs_list.iterrows():
-            self.append_new_record(**row.to_dict())
+            self.append_new_record(override=override, **row.to_dict())
 
     def view_ods(self, order=['src_id', 'src_start_utc', 'src_end_utc']):
         """

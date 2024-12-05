@@ -6,6 +6,7 @@ ap = argparse.ArgumentParser()
 ap.add_argument('-o', '--ods_file', help="Name of ods json file to read.", default=None)
 ap.add_argument('-d', '--defaults', help="Name of json file holding default values or :descriptor", default=None)
 ap.add_argument('-f', '--data_file', help="Name of data file to read", default=None)
+ap.add_argument('--override', help="Flag to allow new record be added even if failed checking", action='store_true')
 ap.add_argument('--sep', help="Separator for the data file", default='\s+')
 ap.add_argument('-t', '--time_cull', help="Cull existing ods file on time - 'now' or isoformat", default=False)
 ap.add_argument('-i', '--invalid_cull', help="Cull ods of invalid entries", action='store_true')
@@ -42,9 +43,9 @@ if args.ods_file:
     if args.defaults is None:
         args.defaults = ':from_ods'  # If nothing else defined, at least use this
 if args.data_file:
-    ods.update_from_file(data_file_name=args.data_file, defaults=args.defaults, sep=args.sep)
-if args.src_start_utc is not None:  # Assume that this one will always be used outside of defaults
-    ods.append_new_record_from_Namespace(args)
+    ods.update_from_file(data_file_name=args.data_file, defaults=args.defaults, override=args.override, sep=args.sep)
+if args.src_end_utc is not None:  # Assume that this one will always be used outside of defaults
+    ods.append_new_record_from_Namespace(ns=args, override=args.override)
 if args.time_cull:
     ods.cull_ods_by_time(cull_time=args.time_cull)
 if args.invalid_cull:
