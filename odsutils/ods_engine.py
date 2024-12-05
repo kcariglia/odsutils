@@ -327,6 +327,17 @@ class ODS:
             data.append(row)
         print(tabulate(data))
 
+    def std(self):
+        """
+        Print out the keys/types
+
+        """
+        from tabulate import tabulate
+        data = [['key', 'type']]
+        for key, val in self.ods_fields.items():
+            data.append([key, val])
+        print(data)
+
     def write_ods(self, file_name):
         """
         Export the ods to a json file.
