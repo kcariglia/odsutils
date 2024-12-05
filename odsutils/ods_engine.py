@@ -98,34 +98,23 @@ class ODS:
             Is the record a valid ods record
 
         """
+        ending = '' if ctr is None else f'in record {ctr}'
         is_valid = True
-        for key in rec:
+        for key in rec:  # check that all supplied keys are valid and not None
             if key not in self.ods_fields:
-                if ctr is None:
-                    print(f"{key} not an ods_field")
-                else:
-                    print(f"{key} not an ods_field in record {ctr}")
+                print(f"{key} not an ods_field {ending}")
                 is_valid = False
             elif rec[key] is None:
-                if ctr is None:
-                    print(f"Value for {key} is None")
-                else:
-                    print(f"Value for {key} is None for record {ctr}")
+                print(f"Value for {key} is None {ending}")
                 is_valid = False
-        for key in self.ods_fields:
+        for key in self.ods_fields:  # Check that all keys are provided for a rec and type is correct
             if key not in rec:
-                if ctr is None:
-                    print(f"Missing {key}")
-                else:
-                    print(f"Record {ctr} missing {key}")
+                print(f"Missing {key} {ending}")
                 is_valid = False
             try:
                 _ = self.ods_fields[key](rec[key])
             except ValueError:
-                if ctr is None:
-                    print(f"{rec[key]} is wrong type for {key}")
-                else:
-                    print(f"{rec[key]} is wrong type for {key} for record {ctr}")
+                print(f"{rec[key]} is wrong type for {key} {ending}")
                 is_valid = False
         return is_valid
 
