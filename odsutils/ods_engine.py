@@ -11,26 +11,26 @@ class ODS:
     Maintains an internal self.ods record list that gets manipulated.
 
     """
-    ods_fields = [
-        'site_id',
-        'site_lat_deg',
-        'site_lon_deg',
-        'site_el_m',
-        'src_id',
-        'src_is_pulsar_bool',
-        'corr_integ_time_sec',
-        'src_ra_j2000_deg',
-        'src_dec_j2000_deg',
-        'src_radius',
-        'src_start_utc',
-        'src_end_utc',
-        'slew_sec',
-        'trk_rate_dec_deg_per_sec',
-        'trk_rate_ra_deg_per_sec',
-        'freq_lower_hz',
-        'freq_upper_hz',
-        'notes'
-    ]
+    ods_fields = {
+        'site_id': str,
+        'site_lat_deg': float,
+        'site_lon_deg': float,
+        'site_el_m': float,
+        'src_id': str,
+        'src_is_pulsar_bool': bool,
+        'corr_integ_time_sec': float,
+        'src_ra_j2000_deg': float,
+        'src_dec_j2000_deg': float,
+        'src_radius': float,
+        'src_start_utc': str,
+        'src_end_utc': str,
+        'slew_sec': float,
+        'trk_rate_dec_deg_per_sec': float,
+        'trk_rate_ra_deg_per_sec': float,
+        'freq_lower_hz': float,
+        'freq_upper_hz': float,
+        'notes': str
+    }
 
     def __init__(self):
         self.defaults = {}
@@ -116,6 +116,14 @@ class ODS:
                     print(f"Missing {key}")
                 else:
                     print(f"Record {ctr} missing {key}")
+                is_valid = False
+            try:
+                _ = self.ods_fields[key](rec[key])
+            except ValueError:
+                if ctr is None:
+                    print(f"{rec[key]} is wrong type for {key}")
+                else:
+                    print(f"{rec[key]} is wrong type for {key} for record {ctr}")
                 is_valid = False
         return is_valid
 
