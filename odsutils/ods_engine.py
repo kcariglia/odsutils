@@ -223,6 +223,8 @@ class ODS:
         """
         print("Culling ODS of invalid records")
         self.check_ods()
+        if len(self.valid_records) == self.number_of_records:
+            return
         culled_ods = []
         for irec in self.valid_records:
             culled_ods.append(copy(self.ods[irec]))
