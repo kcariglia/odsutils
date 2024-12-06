@@ -57,7 +57,7 @@ if args.data_file:
     ods.update_from_file(data_file_name=args.data_file, defaults=args.defaults, override=args.override,
                          sep=args.sep, replace_char=args.replace_char, header_map=args.header_map)
 if args.src_end_utc is not None:  # Assume that this one will always be used outside of defaults
-    ods.append_new_record_from_Namespace(ns=args, override=args.override)
+    ods.append_new_record_from_namespace(ns=args, override=args.override)
 if args.time_cull:
     ods.cull_ods_by_time(cull_time=args.time_cull)
 if args.invalid_cull:

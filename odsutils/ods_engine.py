@@ -1,5 +1,4 @@
 import json
-from astropy.time import Time
 from copy import copy
 
 
@@ -95,7 +94,10 @@ class ODS:
 
     def check_ods_record(self, rec, ctr=None):
         """
-        Checks a single ods record.
+        Checks a single ods record for:
+            1 - keys are all valid ODS fields
+            2 - values are all consistent with ODS field type
+            3 - all fields are present
 
         Parameters
         ----------
@@ -154,7 +156,7 @@ class ODS:
         """
         Parameter
         ---------
-        defaults : dict, str
+        defaults : dict, str, None
             ods record default values (keys are ods_fields)
             - dict provides the actual default key/value pairs
             - str 
@@ -202,6 +204,7 @@ class ODS:
             isoformat time string
 
         """
+        from astropy.time import Time
         if cull_time == 'now':
             cull_time = Time.now()
         else:
@@ -228,36 +231,26 @@ class ODS:
             culled_ods.append(copy(self.ods[irec]))
         self.ods = culled_ods
 
-    def new_record(self, init_value=None):
+    def new_record(self):
         """
-        Generate a full record, with each value set by init_value.
-
-        Parameter
-        ---------
-        init_value : anything
-            Whatever you want, however, if a dict, it will assume the dict has ods_field values to use and others set to None
+        Generate a full record, with each value set to None
 
         Return
         ------
         dict
-            A new ods record
+            A new None ods record
 
         """
         rec = {}
         for key in self.ods_fields:
-            if isinstance(init_value, dict):
-                if key in init_value:
-                    rec[key] = init_value[key]
-                else:
-                    rec[key] = None
-            else:
-                rec[key] = init_value
+            rec[key] = None
         return rec
 
-    def append_new_record_from_Namespace(self, ns, override=False):
+    def append_new_record_from_namespace(self, ns, override=False):
         """
         Appends a new ods record to self.ods supplied as a Namespace
-        Between defaults and kwargs, must be complete ods record.
+        
+        Between defaults and namespace, must be complete/valid ods record unless override is True.
 
         """
         kwargs = {}
@@ -269,7 +262,8 @@ class ODS:
     def append_new_record(self, override=False, **kwargs):
         """
         Append a new record to self.ods, using defaults then kwargs.
-        Between defaults and kwargs, must be complete ods record.
+        
+        Between defaults and kwargs, must be complete/valid ods record unless override is True.
 
         """
         new_rec = self.new_record(self.defaults)
@@ -282,6 +276,10 @@ class ODS:
 
     def update_from_list(self, entries, override=False):
         """
+        Append a new record to self.ods, using defaults then entries.
+        
+        Between defaults and entries, must be complete/valid ods record unless override is True.
+        
         Parameters
         ----------
         entries : list of dicts
@@ -297,6 +295,8 @@ class ODS:
     def update_from_file(self, data_file_name, defaults=None, override=False, sep="\s+", replace_char=None, header_map=None):
         """
         Append new records from a data file to self.ods; assumes the first line is a header.
+
+        Between defaults and data file columns, must be a complete/valid ods record unless override is True.
 
         Parameters
         ----------
@@ -389,7 +389,7 @@ class ODS:
 
         """
         if not len(self.ods):
-            print("WARNING: The ODS file is empty")
+            print("WARNING: Writing an empty ODS file!")
         ods2write = {'ods_data': self.ods}
         with open(file_name, 'w') as fp:
             json.dump(ods2write, fp, indent=2)
