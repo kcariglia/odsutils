@@ -275,6 +275,20 @@ class ODS:
         else:
             print("Not adding record.")
 
+    def update_from_list(self, entries, override=False):
+        """
+        Parameters
+        ----------
+        entries : list of dicts
+            List of dictionaries containing ODS fields
+        override : bool
+            add record regardless of passing ods checking
+
+        """
+        for entry in entries:
+            self.append_new_record(override=override, **entry)
+        self.check_ods()
+
     def update_from_file(self, data_file_name, defaults=None, override=False, sep="\s+", replace_char=None, header_map=None):
         """
         Append new records from a data file to self.ods; assumes the first line is a header.
