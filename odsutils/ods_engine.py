@@ -292,7 +292,7 @@ class ODS:
             self.append_new_record(override=override, **entry)
         self.check_ods()
 
-    def update_from_file(self, data_file_name, defaults=None, override=False, sep="\s+", replace_char=None, header_map=None):
+    def update_from_file(self, data_file_name, override=False, sep="\s+", replace_char=None, header_map=None):
         """
         Append new records from a data file to self.ods; assumes the first line is a header.
 
@@ -302,13 +302,6 @@ class ODS:
         ----------
         data_file_name : str
             Name of input data file.
-        defaults : dict, str
-            ods record default values (keys are ods_fields)
-            - dict provides the actual default key/value pairs
-            - str 
-              (a) if starts with ':', uses "special case" of the from_ods input sets (can add options...)
-              (b) is a filename with the defaults as a json
-                  if there is a ':', then it is that filename preceding and the key after the :
         override : bool
             add record regardless of passing ods checking
         sep : str
@@ -323,8 +316,6 @@ class ODS:
 
         """
         import pandas as pd
-
-        self.get_defaults_dict(defaults)
 
         obs_list = pd.read_csv(data_file_name, sep=sep)
         if isinstance(replace_char, str):

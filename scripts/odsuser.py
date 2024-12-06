@@ -54,7 +54,7 @@ if args.data_file:
         args.replace_char = args.replace_char.split(',')
     if args.header_map is not None:
         args.header_map = ods_engine.read_json_file(args.header_map)
-    ods.update_from_file(data_file_name=args.data_file, defaults=args.defaults, override=args.override,
+    ods.update_from_file(data_file_name=args.data_file, override=args.override,
                          sep=args.sep, replace_char=args.replace_char, header_map=args.header_map)
 if args.src_end_utc is not None:  # Assume that this one will always be used outside of defaults
     ods.append_new_record_from_namespace(ns=args, override=args.override)
