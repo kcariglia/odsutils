@@ -381,7 +381,7 @@ class ODS:
 
     def write_ods(self, file_name):
         """
-        Export the ods to a json file.
+        Export the ods to an ods json file.
 
         Parameter
         ---------
