@@ -39,11 +39,16 @@ class ODS:
         'notes': str
     }
 
-    def __init__(self):
+    def __init__(self, quiet=False):
+        self.quiet = quiet
         self.defaults = {}
         self.ods = []
         self.valid_records = []
         self.number_of_records = 0
+
+    def qprint(self, msg):
+        if not self.quiet:
+            print(msg)
 
     def read_ods(self, ods_file_name):
         """
@@ -67,7 +72,7 @@ class ODS:
         input_ods_data = read_json_file(self.ods_file_name)
         self.ods = input_ods_data['ods_data']  # This is the internal list of ods records
         self.check_ods()
-        print(f"Read {self.number_of_records} records from {self.ods_file_name}")
+        self.qprint(f"Read {self.number_of_records} records from {self.ods_file_name}")
         number_of_invalid_records = self.number_of_records - len(self.valid_records)
         if number_of_invalid_records:
             print(f"{number_of_invalid_records} / {self.number_of_records} were not valid.")
@@ -109,20 +114,20 @@ class ODS:
         is_valid = True
         for key in rec:  # check that all supplied keys are valid and not None
             if key not in self.ods_fields:
-                print(f"{key} not an ods_field {ending}")
+                self.qprint(f"{key} not an ods_field {ending}")
                 is_valid = False
             elif rec[key] is None:
-                print(f"Value for {key} is None {ending}")
+                self.qprint(f"Value for {key} is None {ending}")
                 is_valid = False
         for key in self.ods_fields:  # Check that all keys are provided for a rec and type is correct
             if key not in rec:
-                print(f"Missing {key} {ending}")
+                self.qprint(f"Missing {key} {ending}")
                 is_valid = False
             if rec[key] is not None:
                 try:
                     _ = self.ods_fields[key](rec[key])
                 except ValueError:
-                    print(f"{rec[key]} is wrong type for {key} {ending}")
+                    self.qprint(f"{rec[key]} is wrong type for {key} {ending}")
                     is_valid = False
         return is_valid
 
@@ -183,9 +188,9 @@ class ODS:
                 self.defaults = read_json_file(fnkey[0])
                 if len(fnkey) == 2:
                     self.defaults = self.defaults[fnkey[1]]
-        print(f"Default values from {using_from}")
+        self.qprint(f"Default values from {using_from}")
         for key, val in self.defaults.items():
-            print(f"\t{key:26s}  {val}")
+            self.qprint(f"\t{key:26s}  {val}")
 
     def cull_ods_by_time(self, cull_time='now'):
         """
@@ -201,7 +206,7 @@ class ODS:
             cull_time = Time.now()
         else:
             cull_time = Time(cull_time)
-        print(f"Culling ODS for {cull_time}")
+        self.qprint(f"Culling ODS for {cull_time}")
         culled_ods = []
         for rec in self.ods:
             end_time = Time(rec['src_end_utc'])
@@ -214,7 +219,7 @@ class ODS:
         Remove entries that fail validity check.
 
         """
-        print("Culling ODS for invalid records")
+        self.qprint("Culling ODS for invalid records")
         self.check_ods()
         if len(self.valid_records) == self.number_of_records:
             return
@@ -383,6 +388,8 @@ class ODS:
             Name of ods json file to write
 
         """
+        if not len(self.ods):
+            print("WARNING: The ODS file is empty")
         ods2write = {'ods_data': self.ods}
         with open(file_name, 'w') as fp:
             json.dump(ods2write, fp, indent=2)
