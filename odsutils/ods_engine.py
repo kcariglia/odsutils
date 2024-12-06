@@ -45,9 +45,9 @@ class ODS:
         self.valid_records = []
         self.number_of_records = 0
 
-    def qprint(self, msg):
+    def qprint(self, msg, end='\n'):
         if not self.quiet or msg.startswith("WARNING:"):
-            print(msg)
+            print(msg, end=end)
 
     def read_ods(self, ods_file_name):
         """
