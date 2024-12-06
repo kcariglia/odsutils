@@ -85,6 +85,7 @@ class ODS:
         ---------
         input_ods_sets : dict
             Dictionary of ods sets
+
         """
         self.input_ods_sets = {}  # 
         for irec in self.valid_records:
@@ -243,7 +244,7 @@ class ODS:
         Return
         ------
         dict
-            A new None ods record
+            A new initialized ods record
 
         """
         rec = {}
@@ -369,10 +370,8 @@ class ODS:
             print(tabulate(data))
 
     def std(self):
-        """
-        Print out the keys/types
+        """Print out the keys/types of ods record"""
 
-        """
         from tabulate import tabulate
         data = []
         for key, val in self.ods_fields.items():
