@@ -46,7 +46,7 @@ class ODS:
         self.number_of_records = 0
 
     def qprint(self, msg):
-        if not self.quiet:
+        if not self.quiet or msg.startswith("WARNING:"):
             print(msg)
 
     def read_ods(self, ods_file_name):
@@ -209,27 +209,32 @@ class ODS:
             cull_time = Time.now()
         else:
             cull_time = Time(cull_time)
-        self.qprint(f"Culling ODS for {cull_time}")
+        self.qprint(f"Culling ODS for {cull_time}:", end='  ')
         culled_ods = []
         for rec in self.ods:
             end_time = Time(rec['src_end_utc'])
             if end_time > cull_time:
                 culled_ods.append(rec)
         self.ods = copy(culled_ods)
+        self.qprint(f"retaining {len(self.ods)} of {self.number_of_records}")
+        self.check_ods()
 
     def cull_ods_by_invalid(self):
         """
         Remove entries that fail validity check.
 
         """
-        self.qprint("Culling ODS for invalid records")
+        self.qprint("Culling ODS for invalid records:", end='  ')
         self.check_ods()
         if len(self.valid_records) == self.number_of_records:
+            self.qprint("retaining all.")
             return
         culled_ods = []
         for irec in self.valid_records:
             culled_ods.append(copy(self.ods[irec]))
         self.ods = culled_ods
+        self.qprint(f"retaining {len(self.ods)} of {self.number_of_records}")
+        self.check_ods()
 
     def new_record(self):
         """
@@ -273,7 +278,7 @@ class ODS:
         if is_valid or override:
             self.ods.append(new_rec)
         else:
-            print("Not adding record.")
+            self.qprint("WARNING: Record not valid -- not adding!")
 
     def update_from_list(self, entries, override=False):
         """
@@ -385,7 +390,7 @@ class ODS:
 
         """
         if not len(self.ods):
-            print("WARNING: Writing an empty ODS file!")
+            self.qprint("WARNING: Writing an empty ODS file!")
         ods2write = {'ods_data': self.ods}
         with open(file_name, 'w') as fp:
             json.dump(ods2write, fp, indent=2)
