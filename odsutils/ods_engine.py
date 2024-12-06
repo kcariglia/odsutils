@@ -319,9 +319,9 @@ class ODS:
         for blk in blocks:
             data = []
             for key in order:
-                row = [key]
-                for i in blk:
-                    row.append(self.ods[i][key])
+                row = [key] + [self.ods[i][key] for i in blk]
+                #for i in blk:
+                #    row.append(self.ods[i][key])
                 data.append(row)
             print(tabulate(data))
 
