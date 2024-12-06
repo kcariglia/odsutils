@@ -3,6 +3,13 @@ from astropy.time import Time
 from copy import copy
 
 
+def read_json_file(filename):
+    if not filename.endswith('.json'):
+        filename = filename + '.json'
+    with open(filename, 'r') as fp:
+        input_file = json.load(fp)
+    return input_file
+
 
 class ODS:
     """
@@ -36,6 +43,7 @@ class ODS:
         self.defaults = {}
         self.ods = []
         self.valid_records = []
+        self.number_of_records = 0
 
     def read_ods(self, ods_file_name):
         """
@@ -56,8 +64,7 @@ class ODS:
 
         """
         self.ods_file_name = ods_file_name
-        with open(self.ods_file_name, 'r') as fp:
-            input_ods_data = json.load(fp)
+        input_ods_data = read_json_file(self.ods_file_name)
         self.ods = input_ods_data['ods_data']  # This is the internal list of ods records
         self.check_ods()
         print(f"Read {self.number_of_records} records from {self.ods_file_name}")
@@ -173,8 +180,7 @@ class ODS:
                     print(f"Not valid default case: {defaults}")
             else:
                 fnkey = defaults.split(':')
-                with open(fnkey[0], 'r') as fp:
-                    self.defaults = json.load(fp)
+                self.defaults = read_json_file(fnkey[0])
                 if len(fnkey) == 2:
                     self.defaults = self.defaults[fnkey[1]]
         print(f"Default values from {using_from}")
@@ -271,9 +277,7 @@ class ODS:
 
     def update_from_file(self, data_file_name, defaults=None, override=False, sep="\s+", replace_char=None, header_map=None):
         """
-        Append new records from a data file to self.ods
-        Assumes the first line is a header containing the exact ods entry names.
-        Between defaults and data in file, must be a complete ods record.
+        Append new records from a data file to self.ods; assumes the first line is a header.
 
         Parameters
         ----------
@@ -293,9 +297,10 @@ class ODS:
         replace_char : None, str, tuple, list
             replace characters in column headers
             - str: remove that character (replace with '')
-            - tuple/list (of length 2): replace [0] with [1]
+            - tuple/list of length 1: same as above
+            - tuple/list of length 2: replace [0] with [1]
         header_map : None, dict
-            replace column header names with those provided
+            replace column header names with those provided {<datafile_header_name>: <ods_header_name>}
 
         """
         import pandas as pd
@@ -303,19 +308,23 @@ class ODS:
         self.get_defaults_dict(defaults)
 
         obs_list = pd.read_csv(data_file_name, sep=sep)
-        if isinstance(replace_char, str):  # remove that character
+        if isinstance(replace_char, str):
             obs_list.columns = obs_list.columns.str.replace(replace_char, "")
-        elif isinstance(replace_char, (list, tuple)) and len(replace_char) == 2:  # replace that character
-            obs_list.columns = obs_list.columns.str.replace(replace_char[0], replace_char[1])
+        elif isinstance(replace_char, (list, tuple)):
+            if len(replace_char) == 1:
+                obs_list.columns = obs_list.columns.str.replace(replace_char[0], "")
+            elif len(replace_char) == 2:
+                obs_list.columns = obs_list.columns.str.replace(replace_char[0], replace_char[1])
         if isinstance(header_map, dict):  # rename the provided columns
             obs_list = obs_list.rename(header_map, axis='columns')
 
         for _, row in obs_list.iterrows():
             self.append_new_record(override=override, **row.to_dict())
+        self.check_ods()
 
     def view_ods(self, order=['src_id', 'src_start_utc', 'src_end_utc'], number_per_block=5):
         """
-        View the ods as a table.  If more than ~5, this gets too wide...
+        View the ods as a table arranged in blocks.
 
         Parameters
         ----------
@@ -325,6 +334,8 @@ class ODS:
             Number of records to view per block
 
         """
+        if not self.number_of_records:
+            return
         from tabulate import tabulate
         from numpy import ceil
         blocks = [range(i * number_per_block, (i+1) * number_per_block) for i in range(int(ceil(self.number_of_records / number_per_block)))]
