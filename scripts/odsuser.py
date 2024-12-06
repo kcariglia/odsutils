@@ -44,25 +44,28 @@ args = ap.parse_args()
 ods = ods_engine.ODS()
 if args.std_show:
     ods.std()
+
 if args.ods_file:
     ods.read_ods(ods_file_name=args.ods_file)
     if args.defaults is None:
         args.defaults = ':from_ods'  # If nothing else defined, at least use this
 ods.get_defaults_dict(args.defaults)
+
 if args.data_file:
-    if args.replace_char is not None:
-        args.replace_char = args.replace_char.split(',')
-    if args.header_map is not None:
-        args.header_map = ods_engine.read_json_file(args.header_map)
     ods.update_from_file(data_file_name=args.data_file, override=args.override,
                          sep=args.sep, replace_char=args.replace_char, header_map=args.header_map)
+
 if args.src_end_utc is not None:  # Assume that this one will always be used outside of defaults
     ods.append_new_record_from_namespace(ns=args, override=args.override)
+
 if args.time_cull:
     ods.cull_ods_by_time(cull_time=args.time_cull)
+
 if args.invalid_cull:
     ods.cull_ods_by_invalid()
+
 if args.view:
     ods.view_ods(number_per_block=args.block)
+
 if args.write:
     ods.write_ods(file_name=args.write)

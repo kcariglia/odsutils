@@ -311,21 +311,25 @@ class ODS:
             - str: remove that character (replace with '')
             - tuple/list of length 1: same as above
             - tuple/list of length 2: replace [0] with [1]
-        header_map : None, dict
-            replace column header names with those provided {<datafile_header_name>: <ods_header_name>}
+        header_map : None, dict, str
+            replace column header names with those provided
+            - str: read json file
+            - dict: {<datafile_header_name>: <ods_header_name>}
 
         """
         import pandas as pd
 
         obs_list = pd.read_csv(data_file_name, sep=sep)
-        if isinstance(replace_char, str):
-            obs_list.columns = obs_list.columns.str.replace(replace_char, "")
-        elif isinstance(replace_char, (list, tuple)):
+
+        if replace_char is not None:
+            if isinstance(replace_char, str):
+                replace_char = replace_char.split(',')
             if len(replace_char) == 1:
-                obs_list.columns = obs_list.columns.str.replace(replace_char[0], "")
-            elif len(replace_char) == 2:
-                obs_list.columns = obs_list.columns.str.replace(replace_char[0], replace_char[1])
-        if isinstance(header_map, dict):  # rename the provided columns
+                replace_char.append('')
+            obs_list.columns = obs_list.columns.str.replace(replace_char[0], replace_char[1])
+        if header_map is not None:
+            if isinstance(header_map, str):
+                header_map = read_json_file(header_map)
             obs_list = obs_list.rename(header_map, axis='columns')
 
         for _, row in obs_list.iterrows():
