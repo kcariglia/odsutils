@@ -156,7 +156,7 @@ class ODS:
             Dictionary containing whatever ods records defaults are provided.
 
         """
-        if defaults is None:
+        if defaults is None:  # No change to existing self.defaults
             return
         if isinstance(defaults, dict):
             self.defaults = defaults
@@ -165,7 +165,10 @@ class ODS:
             using_from = defaults
             if defaults[0] == ':':
                 if defaults[1:] == 'from_ods':
-                    self._from_ods_defaults()
+                    self.defaults = {}
+                    for key, val in self.input_ods_sets.items():
+                        if len(val) == 1:
+                            self.defaults[key] = list(val)[0]
                 else:
                     print(f"Not valid default case: {defaults}")
             else:
@@ -177,12 +180,6 @@ class ODS:
         print(f"Default values from {using_from}")
         for key, val in self.defaults.items():
             print(f"\t{key:26s}  {val}")
-
-    def _from_ods_defaults(self):
-        self.defaults = {}
-        for key, val in self.input_ods_sets.items():
-            if len(val) == 1:
-                self.defaults[key] = list(val)[0]
 
     def cull_ods_by_time(self, cull_time='now'):
         """
@@ -305,7 +302,7 @@ class ODS:
         for _, row in obs_list.iterrows():
             self.append_new_record(override=override, **row.to_dict())
 
-    def view_ods(self, order=['src_id', 'src_start_utc', 'src_end_utc']):
+    def view_ods(self, order=['src_id', 'src_start_utc', 'src_end_utc'], number_per_block=5):
         """
         View the ods as a table.  If more than ~5, this gets too wide...
 
@@ -315,20 +312,18 @@ class ODS:
             First entries in table, rest of ods record values are append afterwards.
         """
         from tabulate import tabulate
-        data = []
-        for key in order:
-            row = [key]
-            for entry in self.ods:
-                row.append(entry[key])
-            data.append(row)
-        for key in self.ods_fields:
-            if key in order:
-                continue
-            row = [key]
-            for entry in self.ods:
-                row.append(entry[key])
-            data.append(row)
-        print(tabulate(data))
+        from numpy import ceil
+        blocks = [range(i * number_per_block, (i+1) * number_per_block) for i in range(int(ceil(self.number_of_records / number_per_block)))]
+        blocks[-1] = range(blocks[-1].start, self.number_of_records)
+        order = order + [x for x in self.ods_fields if x not in order]
+        for blk in blocks:
+            data = []
+            for key in order:
+                row = [key]
+                for i in blk:
+                    row.append(self.ods[i][key])
+                data.append(row)
+            print(tabulate(data))
 
     def std(self):
         """
