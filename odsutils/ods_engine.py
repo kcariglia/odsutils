@@ -237,7 +237,7 @@ class ODS:
         self.qprint(f"retaining {len(self.ods)} of {self.number_of_records}")
         self.check_ods()
 
-    def new_record(self):
+    def init_new_record(self):
         """
         Generate a full record, with each value set to None and apply defaults.
 
@@ -253,7 +253,7 @@ class ODS:
         rec.update(self.defaults)
         return rec
 
-    def append_new_record_from_namespace(self, ns, override=False):
+    def add_new_record_from_namespace(self, ns, override=False):
         """
         Appends a new ods record to self.ods supplied as a Namespace
         
@@ -264,16 +264,16 @@ class ODS:
         for key, val in vars(ns).items():
             if key in self.ods_fields:
                 kwargs[key] = val
-        self.append_new_record(override=override, **kwargs)
+        self.add_new_record(override=override, **kwargs)
 
-    def append_new_record(self, override=False, **kwargs):
+    def add_new_record(self, override=False, **kwargs):
         """
         Append a new record to self.ods, using defaults then kwargs.
         
         Between defaults and kwargs, must be complete/valid ods record unless override is True.
 
         """
-        new_rec = self.new_record()
+        new_rec = self.init_new_record()
         new_rec.update(kwargs)
         is_valid = self.check_ods_record(new_rec)
         if is_valid or override:
@@ -281,7 +281,7 @@ class ODS:
         else:
             self.qprint("WARNING: Record not valid -- not adding!")
 
-    def update_from_list(self, entries, override=False):
+    def add_from_list(self, entries, override=False):
         """
         Append a new record to self.ods, using defaults then entries.
         
@@ -296,10 +296,10 @@ class ODS:
 
         """
         for entry in entries:
-            self.append_new_record(override=override, **entry)
+            self.add_new_record(override=override, **entry)
         self.check_ods()
 
-    def update_from_file(self, data_file_name, override=False, sep="\s+", replace_char=None, header_map=None):
+    def add_from_file(self, data_file_name, override=False, sep="\s+", replace_char=None, header_map=None):
         """
         Append new records from a data file to self.ods; assumes the first line is a header.
 
@@ -340,7 +340,7 @@ class ODS:
             obs_list = obs_list.rename(header_map, axis='columns')
 
         for _, row in obs_list.iterrows():
-            self.append_new_record(override=override, **row.to_dict())
+            self.add_new_record(override=override, **row.to_dict())
         self.check_ods()
 
     def view_ods(self, order=['src_id', 'src_start_utc', 'src_end_utc'], number_per_block=5):
