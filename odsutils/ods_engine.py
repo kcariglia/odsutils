@@ -233,7 +233,7 @@ class ODS:
 
     def new_record(self):
         """
-        Generate a full record, with each value set to None
+        Generate a full record, with each value set to None and apply defaults.
 
         Return
         ------
@@ -244,6 +244,7 @@ class ODS:
         rec = {}
         for key in self.ods_fields:
             rec[key] = None
+        rec.update(self.defaults)
         return rec
 
     def append_new_record_from_namespace(self, ns, override=False):
