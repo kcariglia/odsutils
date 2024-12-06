@@ -5,13 +5,16 @@ from odsutils import ods_engine
 ap = argparse.ArgumentParser()
 ap.add_argument('-o', '--ods_file', help="Name of ods json file to read.", default=None)
 ap.add_argument('-d', '--defaults', help="Name of json file holding default values or :descriptor", default=None)
-ap.add_argument('-f', '--data_file', help="Name of data file to read", default=None)
 ap.add_argument('--override', help="Flag to allow new record be added even if failed checking", action='store_true')
+# Data file options
+ap.add_argument('-f', '--data_file', help="Name of data file to read", default=None)
 ap.add_argument('--sep', help="Separator for the data file", default='\s+')
 ap.add_argument('--replace_char', help="Replace character in data file column header names", default=None)
 ap.add_argument('--header_map', help="Name of json file that maps data file headers to ODS keys", default=None)
+# Types of "culling"
 ap.add_argument('-t', '--time_cull', help="Cull existing ods file on time - 'now' or isoformat", default=False)
 ap.add_argument('-i', '--invalid_cull', help="Cull ods of invalid entries", action='store_true')
+# Output
 ap.add_argument('-w', '--write', help="Write ods to this file name", default=False)
 ap.add_argument('-v', '--view', help="View ods", action='store_true')
 ap.add_argument('--block', help="Number of ods records to show in each view block", default=5)
