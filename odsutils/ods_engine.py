@@ -269,7 +269,7 @@ class ODS:
         else:
             print("Not adding record.")
 
-    def update_from_file(self, data_file_name, defaults=None, override=False, sep="\s+"):
+    def update_from_file(self, data_file_name, defaults=None, override=False, sep="\s+", replace_char=None, header_map=None):
         """
         Append new records from a data file to self.ods
         Assumes the first line is a header containing the exact ods entry names.
@@ -290,6 +290,12 @@ class ODS:
             add record regardless of passing ods checking
         sep : str
             separator
+        replace_char : None, str, tuple, list
+            replace characters in column headers
+            - str: remove that character (replace with '')
+            - tuple/list (of length 2): replace [0] with [1]
+        header_map : None, dict
+            replace column header names with those provided
 
         """
         import pandas as pd
@@ -297,7 +303,12 @@ class ODS:
         self.get_defaults_dict(defaults)
 
         obs_list = pd.read_csv(data_file_name, sep=sep)
-        obs_list.columns = obs_list.columns.str.replace("#", "")
+        if isinstance(replace_char, str):  # remove that character
+            obs_list.columns = obs_list.columns.str.replace(replace_char, "")
+        elif isinstance(replace_char, (list, tuple)) and len(replace_char) == 2:  # replace that character
+            obs_list.columns = obs_list.columns.str.replace(replace_char[0], replace_char[1])
+        if isinstance(header_map, dict):  # rename the provided columns
+            obs_list = obs_list.rename(header_map, axis='columns')
 
         for _, row in obs_list.iterrows():
             self.append_new_record(override=override, **row.to_dict())
@@ -306,10 +317,13 @@ class ODS:
         """
         View the ods as a table.  If more than ~5, this gets too wide...
 
-        Parameter
-        ---------
+        Parameters
+        ----------
         order : list
             First entries in table, rest of ods record values are append afterwards.
+        number_per_block : int
+            Number of records to view per block
+
         """
         from tabulate import tabulate
         from numpy import ceil
@@ -320,8 +334,6 @@ class ODS:
             data = []
             for key in order:
                 row = [key] + [self.ods[i][key] for i in blk]
-                #for i in blk:
-                #    row.append(self.ods[i][key])
                 data.append(row)
             print(tabulate(data))
 
