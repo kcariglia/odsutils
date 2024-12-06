@@ -267,7 +267,7 @@ class ODS:
         Between defaults and kwargs, must be complete/valid ods record unless override is True.
 
         """
-        new_rec = self.new_record(self.defaults)
+        new_rec = self.new_record()
         new_rec.update(kwargs)
         is_valid = self.check_ods_record(new_rec)
         if is_valid or override:
