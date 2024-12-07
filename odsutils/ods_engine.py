@@ -1,5 +1,6 @@
 from copy import copy
 from .ods_standard import Standard
+from .ods_check import ODSCheck
 from .ods_tools import read_json_file, write_json_file, Base
 
 
@@ -17,6 +18,7 @@ class ODS(Base):
         self.valid_records = []
         self.number_of_records = 0
         self.standard = Standard(version)  # Will modify/etc as NRAO defines
+        self.check = ODSCheck(self.standard)
 
     def read_ods(self, ods_file_name):
         """
@@ -33,13 +35,14 @@ class ODS(Base):
             The supplied ods file name
         ods : list
             List of ods records that is manipulated
-        see self.check_ods/self._gen_input_sets for others
+        see self._gen_input_sets for others
 
         """
         self.ods_file_name = ods_file_name
         input_ods_data = read_json_file(self.ods_file_name)
         self.ods = input_ods_data[self.standard.data_key]  # This is the internal list of ods records
-        self.check_ods()
+        self.number_of_records = len(self.ods)
+        self.valid_records = self.check.ods(self.ods)
         self.qprint(f"Read {self.number_of_records} records from {self.ods_file_name}")
         number_of_invalid_records = self.number_of_records - len(self.valid_records)
         if number_of_invalid_records:
@@ -61,66 +64,6 @@ class ODS(Base):
             for key, val in self.ods[irec].items():
                 self.input_ods_sets.setdefault(key, set())
                 self.input_ods_sets[key].add(val)
-
-    def check_ods_record(self, rec, ctr=None):
-        """
-        Checks a single ods record for:
-            1 - keys are all valid ODS fields
-            2 - values are all consistent with ODS field type
-            3 - all fields are present
-
-        Parameters
-        ----------
-        rec : dict
-            An ods record
-        ctr : int or None
-            If supplied, a counter of which record for printing
-        
-        Return
-        ----------
-        bool
-            Is the record a valid ods record
-
-        """
-        ending = '' if ctr is None else f'in record {ctr}'
-        is_valid = True
-        for key in rec:  # check that all supplied keys are valid and not None
-            if key not in self.standard.ods_fields:
-                self.qprint(f"{key} not an ods_field {ending}")
-                is_valid = False
-            elif rec[key] is None:
-                self.qprint(f"Value for {key} is None {ending}")
-                is_valid = False
-        for key in self.standard.ods_fields:  # Check that all keys are provided for a rec and type is correct
-            if key not in rec:
-                self.qprint(f"Missing {key} {ending}")
-                is_valid = False
-            if rec[key] is not None:
-                try:
-                    _ = self.standard.ods_fields[key](rec[key])
-                except ValueError:
-                    self.qprint(f"{rec[key]} is wrong type for {key} {ending}")
-                    is_valid = False
-        return is_valid
-
-    def check_ods(self):
-        """
-        Checks the ods records that they are correct and complete.
-
-        Attributes
-        ----------
-        self.valid_records : list
-            List of valid record entries in the list
-        self.number_of_records : int
-            Number of records checked.
-
-        """
-        self.valid_records = []
-        for ctr, rec in enumerate(self.ods):
-            is_valid = self.check_ods_record(rec, ctr)
-            if is_valid:
-                self.valid_records.append(ctr)
-        self.number_of_records = len(self.ods)
 
     def get_defaults_dict(self, defaults=':from_ods'):
         """
@@ -187,7 +130,8 @@ class ODS(Base):
                 culled_ods.append(rec)
         self.ods = copy(culled_ods)
         self.qprint(f"retaining {len(self.ods)} of {self.number_of_records}")
-        self.check_ods()
+        self.number_of_records = len(self.ods)
+        self.valid_records = self.check.ods(self.ods)
 
     def cull_ods_by_invalid(self):
         """
@@ -195,7 +139,7 @@ class ODS(Base):
 
         """
         self.qprint("Culling ODS for invalid records:", end='  ')
-        self.check_ods()
+        self.valid_records = self.check.ods(self.ods)
         if len(self.valid_records) == self.number_of_records:
             self.qprint("retaining all.")
             return
@@ -204,7 +148,8 @@ class ODS(Base):
             culled_ods.append(copy(self.ods[irec]))
         self.ods = culled_ods
         self.qprint(f"retaining {len(self.ods)} of {self.number_of_records}")
-        self.check_ods()
+        self.number_of_records = len(self.ods)
+        self.valid_records = self.check.ods(self.ods)
 
     def init_new_record(self):
         """
@@ -244,11 +189,12 @@ class ODS(Base):
         """
         new_rec = self.init_new_record()
         new_rec.update(kwargs)
-        is_valid = self.check_ods_record(new_rec)
+        is_valid = self.check.ods_record(new_rec)
         if is_valid or override:
             self.ods.append(new_rec)
         else:
             self.qprint("WARNING: Record not valid -- not adding!")
+        self.number_of_records = len(self.ods)
 
     def add_from_list(self, entries, override=False):
         """
@@ -267,7 +213,7 @@ class ODS(Base):
         for entry in entries:
             self.add_new_record(override=override, **entry)
         self.qprint(f"Read {len(entries)} records from list.")
-        self.check_ods()
+        self.valid_records = self.check.ods(self.ods)
 
     def add_from_file(self, data_file_name, override=False, sep="\s+", replace_char=None, header_map=None):
         """
@@ -313,7 +259,7 @@ class ODS(Base):
         for _, row in obs_list.iterrows():
             self.add_new_record(override=override, **row.to_dict())
         self.qprint(f"Read {len(obs_list.index)} records from {self.data_file_name}.")
-        self.check_ods()
+        self.valid_records = self.check.ods(self.ods)
 
     def view_ods(self, order=['src_id', 'src_start_utc', 'src_end_utc'], number_per_block=5):
         """
