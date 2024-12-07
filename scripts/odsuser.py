@@ -69,7 +69,7 @@ if args.invalid_cull:
     ods.cull_ods_by_invalid()
 
 if args.update_el:
-    ods.update_by_elevation(el_lim_deg=args.update_el, dt_sec=args.dt_sec)
+    ods.update_by_elevation(el_lim_deg=float(args.update_el), dt_sec=args.dt_sec)
 
 if args.view:
     ods.view_ods(number_per_block=args.block)
