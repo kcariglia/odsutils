@@ -189,7 +189,7 @@ class ODS(Base):
         """
         new_rec = self.init_new_record()
         new_rec.update(kwargs)
-        is_valid = self.check.ods_record(new_rec)
+        is_valid = self.check.record(new_rec)
         if is_valid or override:
             self.ods.append(new_rec)
         else:
@@ -286,6 +286,9 @@ class ODS(Base):
                 row = [key] + [self.ods[i][key] for i in blk]
                 data.append(row)
             print(tabulate(data))
+
+    def obs(self, rec):
+        self.check.observation(rec)
 
     def write_ods(self, file_name):
         """

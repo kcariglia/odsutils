@@ -10,7 +10,7 @@ class ODSCheck(Base):
     def __init__(self, standard):
         self.standard = standard
 
-    def ods_record(self, rec, ctr=None):
+    def record(self, rec, ctr=None):
         """
         Checks a single ods record for:
             1 - keys are all valid ODS fields
@@ -65,7 +65,26 @@ class ODSCheck(Base):
         """
         valid_records = []
         for ctr, rec in enumerate(ods):
-            is_valid = self.ods_record(rec, ctr)
+            is_valid = self.record(rec, ctr)
             if is_valid:
                 valid_records.append(ctr)
         return valid_records
+    
+    def observation(self, rec, ctr=None, number_times=10):
+        from astropy.time import Time
+        from astropy.coordinates import EarthLocation, AltAz, SkyCoord
+        import astropy.units as u
+
+        start = Time(rec[self.standard.start])
+        stop = Time(rec[self.standard.start])
+        dt = (stop - start) / (number_times - 1)
+        times = []
+        for i in range(number_times):
+            times.append(start + i * dt)
+        times = Time(times)
+        location = EarthLocation(lat = rec[self.standard.lat] * u.deg, lon = rec[self.standard.lat] * u.deg, height = rec[self.standard.ele] * u.m)
+
+        aa = AltAz(location=location, obstime=times)
+        coord = SkyCoord(self.sats[rec[self.standard.ra]] * u.deg, rec[self.standard.dec] * u.deg)
+        obs = coord.transform_to(aa)
+        print(obs)

@@ -30,6 +30,16 @@ class Standard_Version_A:
 
     meta_fields = {'data': 'ods_data'}
 
+    def __init__(self):
+        self.observatory = 'site_id'
+        self.lat = 'site_lat_deg'
+        self.lon = 'site_lon_deg'
+        self.ele = 'site_el_m'
+        self.source = 'src_id'
+        self.ra = 'src_ra_j2000_deg'
+        self.dec = 'src_dec_j2000_deg'
+        self.start = 'src_start_utc'
+        self.stop = 'src_stop_utc'
 
 class Standard:
     """

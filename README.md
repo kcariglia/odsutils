@@ -17,8 +17,6 @@ ODS checks are:
     1 - all supplied record entries have the right "name"
     2 - all entries are present and have the right type
 
-The only method is "ods_engine" (from odsutils import ods_engine) and the only script is "odsuser.py".
-
 Standard pip install.
 
 The presumed workflow (as shown in odsuder.py and can be done in one call) is:
