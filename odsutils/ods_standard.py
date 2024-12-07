@@ -31,15 +31,17 @@ class Standard_Version_A:
     meta_fields = {'data': 'ods_data'}
 
     def __init__(self):
-        self.observatory = 'site_id'
-        self.lat = 'site_lat_deg'
-        self.lon = 'site_lon_deg'
-        self.ele = 'site_el_m'
-        self.source = 'src_id'
-        self.ra = 'src_ra_j2000_deg'
-        self.dec = 'src_dec_j2000_deg'
-        self.start = 'src_start_utc'
-        self.stop = 'src_stop_utc'
+        self.transfer_keys = {
+            'observatory': 'site_id',
+            'lat': 'site_lat_deg',
+            'lon': 'site_lon_deg',
+            'ele': 'site_el_m',
+            'source': 'src_id',
+            'ra': 'src_ra_j2000_deg',
+            'dec': 'src_dec_j2000_deg',
+            'start': 'src_start_utc',
+            'stop': 'src_end_utc'
+        }
 
 class Standard:
     """
@@ -53,17 +55,19 @@ class Standard:
             self.version = version
         self.read_version()
 
-    def read_version(self):
-        if self.version == 'A':
-            self.standard = Standard_Version_A()
-        self.ods_fields = self.standard.fields
-        self.data_key = self.standard.meta_fields['data']
-
-    def show(self):
+    def __str__(self):
         """Print out the keys/types of ods record"""
 
         from tabulate import tabulate
         data = []
         for key, val in self.ods_fields.items():
             data.append([key, val])
-        print(tabulate(data, headers=['key', 'type']))
+        return tabulate(data, headers=['key', 'type'])
+
+    def read_version(self):
+        if self.version == 'A':
+            self.standard = Standard_Version_A()
+        self.ods_fields = self.standard.fields
+        self.data_key = self.standard.meta_fields['data']
+        for key, val in self.standard.transfer_keys.items():
+            setattr(self, key, val)

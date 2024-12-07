@@ -76,15 +76,15 @@ class ODSCheck(Base):
         import astropy.units as u
 
         start = Time(rec[self.standard.start])
-        stop = Time(rec[self.standard.start])
+        stop = Time(rec[self.standard.stop])
         dt = (stop - start) / (number_times - 1)
         times = []
         for i in range(number_times):
             times.append(start + i * dt)
         times = Time(times)
-        location = EarthLocation(lat = rec[self.standard.lat] * u.deg, lon = rec[self.standard.lat] * u.deg, height = rec[self.standard.ele] * u.m)
+        location = EarthLocation(lat = float(rec[self.standard.lat]) * u.deg, lon = float(rec[self.standard.lat]) * u.deg, height = float(rec[self.standard.ele]) * u.m)
 
         aa = AltAz(location=location, obstime=times)
-        coord = SkyCoord(self.sats[rec[self.standard.ra]] * u.deg, rec[self.standard.dec] * u.deg)
+        coord = SkyCoord(float(rec[self.standard.ra]) * u.deg, float(rec[self.standard.dec]) * u.deg)
         obs = coord.transform_to(aa)
         print(obs)

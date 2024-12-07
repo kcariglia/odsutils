@@ -45,7 +45,7 @@ args = ap.parse_args()
 
 ods = ods_engine.ODS(quiet=args.quiet, version=args.version)
 if args.std_show:
-    ods.standard.show()
+    print(ods.standard)
 
 if args.ods_file:
     ods.read_ods(ods_file_name=args.ods_file)
