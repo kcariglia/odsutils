@@ -1,17 +1,9 @@
-import json
 from copy import copy
 from .ods_standard import Standard
+from .ods_tools import read_json_file, write_json_file, Base
 
 
-def read_json_file(filename):
-    if not filename.endswith('.json'):
-        filename = filename + '.json'
-    with open(filename, 'r') as fp:
-        input_file = json.load(fp)
-    return input_file
-
-
-class ODS:
+class ODS(Base):
     """
     Utilities to read, update, write, and check ODS records.
 
@@ -24,11 +16,7 @@ class ODS:
         self.ods = []
         self.valid_records = []
         self.number_of_records = 0
-        self.standard = Standard(version)  # Will modify/etc as NRAO defines -- read from ODS file(?)
-
-    def qprint(self, msg, end='\n'):
-        if not self.quiet or msg.startswith("WARNING:"):
-            print(msg, end=end)
+        self.standard = Standard(version)  # Will modify/etc as NRAO defines
 
     def read_ods(self, ods_file_name):
         """
@@ -278,6 +266,7 @@ class ODS:
         """
         for entry in entries:
             self.add_new_record(override=override, **entry)
+        self.qprint(f"Read {len(entries)} records from list.")
         self.check_ods()
 
     def add_from_file(self, data_file_name, override=False, sep="\s+", replace_char=None, header_map=None):
@@ -323,6 +312,7 @@ class ODS:
 
         for _, row in obs_list.iterrows():
             self.add_new_record(override=override, **row.to_dict())
+        self.qprint(f"Read {len(obs_list.index)} records from {self.data_file_name}.")
         self.check_ods()
 
     def view_ods(self, order=['src_id', 'src_start_utc', 'src_end_utc'], number_per_block=5):
@@ -363,6 +353,4 @@ class ODS:
         """
         if not len(self.ods):
             self.qprint("WARNING: Writing an empty ODS file!")
-        ods2write = {self.standard.data_key: self.ods}
-        with open(file_name, 'w') as fp:
-            json.dump(ods2write, fp, indent=2)
+        write_json_file(file_name, {self.standard.data_key: self.ods})
