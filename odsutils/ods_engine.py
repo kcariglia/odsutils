@@ -1,5 +1,6 @@
 import json
 from copy import copy
+from .ods_standard import Standard
 
 
 def read_json_file(filename):
@@ -17,33 +18,13 @@ class ODS:
     Maintains an internal self.ods record list that gets manipulated.
 
     """
-    ods_fields = {
-        'site_id': str,
-        'site_lat_deg': float,
-        'site_lon_deg': float,
-        'site_el_m': float,
-        'src_id': str,
-        'src_is_pulsar_bool': bool,
-        'corr_integ_time_sec': float,
-        'src_ra_j2000_deg': float,
-        'src_dec_j2000_deg': float,
-        'src_radius': float,
-        'src_start_utc': str,
-        'src_end_utc': str,
-        'slew_sec': float,
-        'trk_rate_dec_deg_per_sec': float,
-        'trk_rate_ra_deg_per_sec': float,
-        'freq_lower_hz': float,
-        'freq_upper_hz': float,
-        'notes': str
-    }
-
-    def __init__(self, quiet=False):
+    def __init__(self, quiet=False, version='latest'):
         self.quiet = quiet
         self.defaults = {}
         self.ods = []
         self.valid_records = []
         self.number_of_records = 0
+        self.standard = Standard(version)  # Will modify/etc as NRAO defines -- read from ODS file(?)
 
     def qprint(self, msg, end='\n'):
         if not self.quiet or msg.startswith("WARNING:"):
@@ -69,7 +50,7 @@ class ODS:
         """
         self.ods_file_name = ods_file_name
         input_ods_data = read_json_file(self.ods_file_name)
-        self.ods = input_ods_data['ods_data']  # This is the internal list of ods records
+        self.ods = input_ods_data[self.standard.data_key]  # This is the internal list of ods records
         self.check_ods()
         self.qprint(f"Read {self.number_of_records} records from {self.ods_file_name}")
         number_of_invalid_records = self.number_of_records - len(self.valid_records)
@@ -116,19 +97,19 @@ class ODS:
         ending = '' if ctr is None else f'in record {ctr}'
         is_valid = True
         for key in rec:  # check that all supplied keys are valid and not None
-            if key not in self.ods_fields:
+            if key not in self.standard.ods_fields:
                 self.qprint(f"{key} not an ods_field {ending}")
                 is_valid = False
             elif rec[key] is None:
                 self.qprint(f"Value for {key} is None {ending}")
                 is_valid = False
-        for key in self.ods_fields:  # Check that all keys are provided for a rec and type is correct
+        for key in self.standard.ods_fields:  # Check that all keys are provided for a rec and type is correct
             if key not in rec:
                 self.qprint(f"Missing {key} {ending}")
                 is_valid = False
             if rec[key] is not None:
                 try:
-                    _ = self.ods_fields[key](rec[key])
+                    _ = self.standard.ods_fields[key](rec[key])
                 except ValueError:
                     self.qprint(f"{rec[key]} is wrong type for {key} {ending}")
                     is_valid = False
@@ -158,7 +139,7 @@ class ODS:
         Parameter
         ---------
         defaults : dict, str, None
-            ods record default values (keys are ods_fields)
+            ods record default values (keys are standard.ods_fields)
             - dict provides the actual default key/value pairs
             - str 
               (a) if starts with ':', uses "special case" of the from_ods input sets (can add options...)
@@ -248,7 +229,7 @@ class ODS:
 
         """
         rec = {}
-        for key in self.ods_fields:
+        for key in self.standard.ods_fields:
             rec[key] = None
         rec.update(self.defaults)
         return rec
@@ -262,7 +243,7 @@ class ODS:
         """
         kwargs = {}
         for key, val in vars(ns).items():
-            if key in self.ods_fields:
+            if key in self.standard.ods_fields:
                 kwargs[key] = val
         self.add_new_record(override=override, **kwargs)
 
@@ -362,22 +343,13 @@ class ODS:
         from numpy import ceil
         blocks = [range(i * number_per_block, (i+1) * number_per_block) for i in range(int(ceil(self.number_of_records / number_per_block)))]
         blocks[-1] = range(blocks[-1].start, self.number_of_records)
-        order = order + [x for x in self.ods_fields if x not in order]
+        order = order + [x for x in self.standard.ods_fields if x not in order]
         for blk in blocks:
             data = []
             for key in order:
                 row = [key] + [self.ods[i][key] for i in blk]
                 data.append(row)
             print(tabulate(data))
-
-    def std(self):
-        """Print out the keys/types of ods record"""
-
-        from tabulate import tabulate
-        data = []
-        for key, val in self.ods_fields.items():
-            data.append([key, val])
-        print(tabulate(data, headers=['key', 'type']))
 
     def write_ods(self, file_name):
         """
@@ -391,6 +363,6 @@ class ODS:
         """
         if not len(self.ods):
             self.qprint("WARNING: Writing an empty ODS file!")
-        ods2write = {'ods_data': self.ods}
+        ods2write = {self.standard.data_key: self.ods}
         with open(file_name, 'w') as fp:
             json.dump(ods2write, fp, indent=2)
