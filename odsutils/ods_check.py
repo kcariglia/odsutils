@@ -53,7 +53,7 @@ class ODSCheck(Base):
 
     def ods(self, ods):
         """
-        Checks the ods records that they are correct and complete.
+        Checks the ods records are correct and complete.
 
         Attributes
         ----------
@@ -70,21 +70,27 @@ class ODSCheck(Base):
                 valid_records.append(ctr)
         return valid_records
     
-    def observation(self, rec, ctr=None, number_times=10):
-        from astropy.time import Time
+    def observation(self, rec, el_lim_deg=10.0, dt_sec=120):
+        from astropy.time import Time, TimeDelta
         from astropy.coordinates import EarthLocation, AltAz, SkyCoord
         import astropy.units as u
+        from numpy import where
 
         start = Time(rec[self.standard.start])
         stop = Time(rec[self.standard.stop])
-        dt = (stop - start) / (number_times - 1)
+        dt = TimeDelta(dt_sec, format='sec')
         times = []
-        for i in range(number_times):
-            times.append(start + i * dt)
+        this_step = start
+        while(this_step < stop):
+            times.append(this_step)
+            this_step += dt
         times = Time(times)
         location = EarthLocation(lat = float(rec[self.standard.lat]) * u.deg, lon = float(rec[self.standard.lat]) * u.deg, height = float(rec[self.standard.ele]) * u.m)
 
         aa = AltAz(location=location, obstime=times)
         coord = SkyCoord(float(rec[self.standard.ra]) * u.deg, float(rec[self.standard.dec]) * u.deg)
         obs = coord.transform_to(aa)
-        print(obs)
+        above_horizon = where(obs.alt > el_lim_deg * u.deg)[0]
+        if not len(above_horizon):
+            return False
+        return (times[above_horizon[0]].datetime.isoformat(), times[above_horizon[-1]].datetime.isoformat())

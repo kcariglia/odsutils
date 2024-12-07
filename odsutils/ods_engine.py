@@ -107,6 +107,17 @@ class ODS(Base):
         for key, val in self.defaults.items():
             self.qprint(f"\t{key:26s}  {val}")
 
+    def update_by_elevation(self, el_lim_deg=10.0, dt_sec=120):
+        updated_ods = []
+        for rec in self.ods:
+            time_limits = self.check.observation(rec, el_lim_deg=el_lim_deg, dt_sec=dt_sec)
+            if time_limits:
+                valid_rec = copy(rec)
+                valid_rec.update({self.standard.start: time_limits[0], self.standard.stop: time_limits[1]})
+                updated_ods.append(valid_rec)
+        self.ods = updated_ods
+        self.number_of_records = len(self.ods)
+
     def cull_ods_by_time(self, cull_time='now'):
         """
         Remove entries with end times before cull_time.  Overwrites self.ods.
@@ -286,9 +297,6 @@ class ODS(Base):
                 row = [key] + [self.ods[i][key] for i in blk]
                 data.append(row)
             print(tabulate(data))
-
-    def obs(self, rec):
-        self.check.observation(rec)
 
     def write_ods(self, file_name):
         """
