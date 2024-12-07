@@ -324,9 +324,10 @@ class ODS:
             - dict: {<datafile_header_name>: <ods_header_name>}
 
         """
+        self.data_file_name = data_file_name
         import pandas as pd
 
-        obs_list = pd.read_csv(data_file_name, sep=sep)
+        obs_list = pd.read_csv(self.data_file_name, sep=sep)
 
         if replace_char is not None:
             if isinstance(replace_char, str):
