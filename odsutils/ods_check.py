@@ -74,7 +74,7 @@ class ODSCheck(Base):
         from astropy.time import Time, TimeDelta
         from astropy.coordinates import EarthLocation, AltAz, SkyCoord
         import astropy.units as u
-        from numpy import where
+        from numpy import where, array
 
         start = Time(rec[self.standard.start])
         stop = Time(rec[self.standard.stop])
@@ -90,7 +90,14 @@ class ODSCheck(Base):
         aa = AltAz(location=location, obstime=times)
         coord = SkyCoord(float(rec[self.standard.ra]) * u.deg, float(rec[self.standard.dec]) * u.deg)
         obs = coord.transform_to(aa)
-        above_horizon = where(obs.alt > el_lim_deg * u.deg)[0]
+        #  This is hopefully going to make this work in a more robust manner
+        floatel = []
+        for el in obs.alt.to('deg').value:
+            floatel.append(float(el))
+        floatel = array(floatel)
+        above_horizon = where(floatel > el_lim_deg)
+        # ...instead of just the line below
+        # above_horizon = where(obs.alt > el_lim_deg * u.deg)[0]
         if not len(above_horizon):
             return False
         return (times[above_horizon[0]].datetime.isoformat(), times[above_horizon[-1]].datetime.isoformat())
