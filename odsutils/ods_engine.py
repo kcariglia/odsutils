@@ -18,7 +18,7 @@ class ODS(Base):
         self.valid_records = []
         self.number_of_records = 0
         self.standard = Standard(version)  # Will modify/etc as NRAO defines
-        self.check = ODSCheck(self.standard)
+        self.check = ODSCheck(self.standard, self.quiet)
 
     def read_ods(self, ods_file_name):
         """

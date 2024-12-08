@@ -7,8 +7,9 @@ class ODSCheck(Base):
 
     """
 
-    def __init__(self, standard):
+    def __init__(self, standard, quiet=False):
         self.standard = standard
+        self.quiet = quiet
 
     def record(self, rec, ctr=None):
         """
@@ -70,7 +71,7 @@ class ODSCheck(Base):
                 valid_records.append(ctr)
         return valid_records
     
-    def observation(self, rec, el_lim_deg=10.0, dt_sec=120):
+    def observation(self, rec, el_lim_deg=10.0, dt_sec=120, show_plot=False):
         from astropy.time import Time, TimeDelta
         from astropy.coordinates import EarthLocation, AltAz, SkyCoord
         import astropy.units as u
@@ -93,4 +94,7 @@ class ODSCheck(Base):
         above_horizon = where(obs.alt > el_lim_deg * u.deg)[0]
         if not len(above_horizon):
             return False
+        if show_plot:
+            import matplotlib.pyplot as plt
+            plt.plot(obs.az, obs.alt, label=rec[self.standard.observatory])
         return (times[above_horizon[0]].datetime.isoformat(), times[above_horizon[-1]].datetime.isoformat())
