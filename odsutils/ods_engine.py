@@ -107,16 +107,28 @@ class ODS(Base):
         for key, val in self.defaults.items():
             self.qprint(f"\t{key:26s}  {val}")
 
-    def update_by_elevation(self, el_lim_deg=10.0, dt_sec=120):
+    def update_by_elevation(self, el_lim_deg=10.0, dt_sec=120, show_plot=False):
         updated_ods = []
         for rec in self.ods:
-            time_limits = self.check.observation(rec, el_lim_deg=el_lim_deg, dt_sec=dt_sec)
+            time_limits = self.check.observation(rec, el_lim_deg=el_lim_deg, dt_sec=dt_sec, show_plot=show_plot)
             if time_limits:
                 valid_rec = copy(rec)
                 valid_rec.update({self.standard.start: time_limits[0], self.standard.stop: time_limits[1]})
                 updated_ods.append(valid_rec)
         self.ods = updated_ods
         self.number_of_records = len(self.ods)
+        if show_plot:
+            import matplotlib.pyplot as plt
+            plt.figure(self.standard.plot_azel)
+            plt.xlabel('Azimuth [deg]')
+            plt.ylabel('Elevation [deg]')
+            plt.axis(ymin = el_lim_deg)
+            plt.legend()
+            plt.figure(self.standard.plot_timeel)
+            plt.xlabel('Time [UTC]')
+            plt.ylabel('Elevation [deg]')
+            plt.axis(ymin = el_lim_deg)
+            plt.legend()
 
     def cull_ods_by_time(self, cull_time='now'):
         """

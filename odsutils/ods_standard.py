@@ -54,6 +54,9 @@ class Standard:
         else:
             self.version = version
         self.read_version()
+        # Probably not the best place to carry this, but...
+        self.plot_azel = 'Az vs El'
+        self.plot_timeel = 'Time vs El'
 
     def __str__(self):
         """Print out the keys/types of ods record"""

@@ -96,5 +96,8 @@ class ODSCheck(Base):
             return False
         if show_plot:
             import matplotlib.pyplot as plt
-            plt.plot(obs.az, obs.alt, label=rec[self.standard.observatory])
+            plt.figure(self.standard.plot_azel)
+            plt.plot(obs.az, obs.alt, label=rec[self.standard.source])
+            plt.figure(self.standard.plot_timeel)
+            plt.plot(times.datetime, obs.alt, label=rec[self.standard.source])
         return (times[above_horizon[0]].datetime.isoformat(), times[above_horizon[-1]].datetime.isoformat())
