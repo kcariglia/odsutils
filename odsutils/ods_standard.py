@@ -47,8 +47,17 @@ class Standard:
     """
     Wrapping class around individual standards.
 
+    This is awaiting input from NRAO, who said they are looking at different versions.
+
     """
     def __init__(self, version):
+        """
+        Parameter
+        ---------
+        version : str
+            Version designator, 'latest' will get last.  Placeholder for now.
+
+        """
         if version == 'latest':
             self.version = LATEST
         else:
@@ -68,6 +77,10 @@ class Standard:
         return tabulate(data, headers=['key', 'type'])
 
     def read_version(self):
+        """
+        Read the appropriate version info into this class.
+
+        """
         if self.version == 'A':
             self.standard = Standard_Version_A()
         self.ods_fields = self.standard.fields
