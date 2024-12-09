@@ -2,7 +2,7 @@
 
 This reads, writes, updates and checks ODS lists.
 
-ODS lists are a list of ODS records.
+An ODS list is a list of ODS records.
 
 An ODS file is a json file, with the the ODS list contained under the top-level key "ods_data"
 
@@ -11,7 +11,7 @@ Reading may come from an existing ODS file, from a datafile or be provided by a 
 Records read from a datafile or supplied, are appended to whatever ODS records are already contained in the class ODS list.
 Reading an ODS file, will start a new/different class ODS list.
 
-Files may be culled by provided a time (records ending before that time are removed) or by invalid (records not passed the checks are removed).
+ODS lists may be updated/culled based on a few checks.
 
 ODS checks are:
 1. all supplied record entries have the right "name"
