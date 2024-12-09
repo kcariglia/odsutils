@@ -1,10 +1,10 @@
 from copy import copy
 from .ods_standard import Standard
 from .ods_check import ODSCheck
-from .ods_tools import read_json_file, write_json_file, Base
+from . import ods_tools as tools
 
 
-class ODS(Base):
+class ODS(tools.Base):
     """
     Utilities to read, update, write, and check ODS records.
 
@@ -42,7 +42,7 @@ class ODS(Base):
 
         """
         self.ods_file_name = ods_file_name
-        input_ods_data = read_json_file(self.ods_file_name)
+        input_ods_data = tools.read_json_file(self.ods_file_name)
         self.ods = input_ods_data[self.standard.data_key]  # This is the internal list of ods records
         self.number_of_records = len(self.ods)
         self.valid_records = self.check.ods(self.ods)
@@ -103,7 +103,7 @@ class ODS(Base):
                     print(f"Not valid default case: {defaults}")
             else:
                 fnkey = defaults.split(':')
-                self.defaults = read_json_file(fnkey[0])
+                self.defaults = tools.read_json_file(fnkey[0])
                 if len(fnkey) == 2:
                     self.defaults = self.defaults[fnkey[1]]
         self.qprint(f"Default values from {using_from}")
@@ -277,21 +277,7 @@ class ODS(Base):
 
         """
         self.data_file_name = data_file_name
-        import pandas as pd
-
-        obs_list = pd.read_csv(self.data_file_name, sep=sep)
-
-        if replace_char is not None:
-            if isinstance(replace_char, str):
-                replace_char = replace_char.split(',')
-            if len(replace_char) == 1:
-                replace_char.append('')
-            obs_list.columns = obs_list.columns.str.replace(replace_char[0], replace_char[1])
-        if header_map is not None:
-            if isinstance(header_map, str):
-                header_map = read_json_file(header_map)
-            obs_list = obs_list.rename(header_map, axis='columns')
-
+        obs_list = tools.read_data_file(self.data_file_name, sep=sep, replace_char=replace_char, header_map=header_map)
         for _, row in obs_list.iterrows():
             self.add_new_record(override=override, **row.to_dict())
         self.qprint(f"Read {len(obs_list.index)} records from {self.data_file_name}.")
@@ -338,4 +324,4 @@ class ODS(Base):
         """
         if not len(self.ods):
             self.qprint("WARNING: Writing an empty ODS file!")
-        write_json_file(file_name, {self.standard.data_key: self.ods})
+        tools.write_json_file(file_name, {self.standard.data_key: self.ods})

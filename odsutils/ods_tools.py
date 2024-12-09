@@ -8,12 +8,33 @@ def read_json_file(filename):
         input_file = json.load(fp)
     return input_file
 
+
 def write_json_file(file_name, payload, indent=2):
     with open(file_name, 'w') as fp:
         json.dump(payload, fp, indent=indent)
 
 
+def read_data_file(file_name, sep=']s+]', replace_char=None, header_map=None):
+    import pandas as pd
+
+    data = pd.read_csv(file_name, sep=sep)
+
+    if replace_char is not None:
+        if isinstance(replace_char, str):
+            replace_char = replace_char.split(',')
+        if len(replace_char) == 1:
+            replace_char.append('')
+        data.columns = data.columns.str.replace(replace_char[0], replace_char[1])
+    if header_map is not None:
+        if isinstance(header_map, str):
+            header_map = read_json_file(header_map)
+        data = data.rename(header_map, axis='columns')
+
+    return data
+
 class Base:
     def qprint(self, msg, end='\n'):
+        if not hasattr(self, 'quiet'):
+            self.quiet = False
         if not self.quiet or msg.startswith("WARNING:"):
             print(msg, end=end)
