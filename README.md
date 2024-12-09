@@ -16,6 +16,8 @@ Files may be culled by provided a time (records ending before that time are remo
 ODS checks are:
     1 - all supplied record entries have the right "name"
     2 - all entries are present and have the right type
+    3 - sources above horizon
+    4 - observations don't overlap
 
 Standard pip install.
 
