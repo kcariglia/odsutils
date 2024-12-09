@@ -14,11 +14,14 @@ class ODS(Base):
     def __init__(self, quiet=False, version='latest'):
         self.quiet = quiet
         self.defaults = {}
+        self.reset_ods()
+        self.standard = Standard(version)  # Will modify/etc as NRAO defines
+        self.check = ODSCheck(self.standard, self.quiet)
+
+    def reset_ods(self):
         self.ods = []
         self.valid_records = []
         self.number_of_records = 0
-        self.standard = Standard(version)  # Will modify/etc as NRAO defines
-        self.check = ODSCheck(self.standard, self.quiet)
 
     def read_ods(self, ods_file_name):
         """
@@ -107,6 +110,25 @@ class ODS(Base):
         for key, val in self.defaults.items():
             self.qprint(f"\t{key:26s}  {val}")
 
+    def init_new_record(self):
+        """
+        Generate a full record, with each value set to None and apply defaults.
+
+        Return
+        ------
+        dict
+            A new initialized ods record
+
+        """
+        rec = {}
+        for key in self.standard.ods_fields:
+            rec[key] = None
+        rec.update(self.defaults)
+        return rec
+
+    ##############################################MODIFY#########################################
+    # Methods that modify the existing self.ods
+
     def update_by_elevation(self, el_lim_deg=10.0, dt_sec=120, show_plot=False):
         updated_ods = []
         for rec in self.ods:
@@ -178,34 +200,8 @@ class ODS(Base):
         self.number_of_records = len(self.ods)
         self.valid_records = self.check.ods(self.ods)
 
-    def init_new_record(self):
-        """
-        Generate a full record, with each value set to None and apply defaults.
-
-        Return
-        ------
-        dict
-            A new initialized ods record
-
-        """
-        rec = {}
-        for key in self.standard.ods_fields:
-            rec[key] = None
-        rec.update(self.defaults)
-        return rec
-
-    def add_new_record_from_namespace(self, ns, override=False):
-        """
-        Appends a new ods record to self.ods supplied as a Namespace
-        
-        Between defaults and namespace, must be complete/valid ods record unless override is True.
-
-        """
-        kwargs = {}
-        for key, val in vars(ns).items():
-            if key in self.standard.ods_fields:
-                kwargs[key] = val
-        self.add_new_record(override=override, **kwargs)
+    ##############################################ADD############################################
+    # Methods that add to the existing self.ods
 
     def add_new_record(self, override=False, **kwargs):
         """
@@ -222,6 +218,19 @@ class ODS(Base):
         else:
             self.qprint("WARNING: Record not valid -- not adding!")
         self.number_of_records = len(self.ods)
+
+    def add_new_record_from_namespace(self, ns, override=False):
+        """
+        Appends a new ods record to self.ods supplied as a Namespace
+        
+        Between defaults and namespace, must be complete/valid ods record unless override is True.
+
+        """
+        kwargs = {}
+        for key, val in vars(ns).items():
+            if key in self.standard.ods_fields:
+                kwargs[key] = val
+        self.add_new_record(override=override, **kwargs)
 
     def add_from_list(self, entries, override=False):
         """
@@ -287,6 +296,9 @@ class ODS(Base):
             self.add_new_record(override=override, **row.to_dict())
         self.qprint(f"Read {len(obs_list.index)} records from {self.data_file_name}.")
         self.valid_records = self.check.ods(self.ods)
+
+    ######################################OUTPUT##################################
+    # Methods that show/save self.ods
 
     def view_ods(self, order=['src_id', 'src_start_utc', 'src_end_utc'], number_per_block=5):
         """
