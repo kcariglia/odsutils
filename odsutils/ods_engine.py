@@ -89,25 +89,23 @@ class ODS(tools.Base):
         if defaults is None:  # No change to existing self.defaults
             return
         if isinstance(defaults, dict):
-            self.defaults = defaults
-            using_from = 'input_dict'
+            self.defaults = copy(defaults)
+            defaults = 'input_dict'
         elif isinstance(defaults, str):
-            using_from = defaults
             if '.json' in defaults:
                 fnkey = defaults.split(':')
                 self.defaults = tools.read_json_file(fnkey[0])
                 if len(fnkey) == 2:
                     self.defaults = self.defaults[fnkey[1]]
+            elif defaults == 'from_ods':  # The only option for now, uses single-valued keys
+                self.defaults = {}
+                for key, val in self.input_ods_sets.items():
+                    if len(val) == 1:
+                        self.defaults[key] = list(val)[0]
             else:
-                if defaults == 'from_ods':  # The only option for now
-                    self.defaults = {}
-                    for key, val in self.input_ods_sets.items():
-                        if len(val) == 1:
-                            self.defaults[key] = list(val)[0]
-                else:
-                    print(f"Not valid default case: {defaults}")
+                print(f"Not valid default case: {defaults}")
 
-        self.qprint(f"Default values from {using_from}")
+        self.qprint(f"Default values from {defaults}")
         for key, val in self.defaults.items():
             self.qprint(f"\t{key:26s}  {val}")
 
