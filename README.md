@@ -1,4 +1,4 @@
-Operational Data Sharing (ODS)
+#Operational Data Sharing (ODS)
 
 This reads, writes, updates and checks ODS lists.
 
@@ -14,23 +14,23 @@ Reading an ODS file, will start a new/different class ODS list.
 Files may be culled by provided a time (records ending before that time are removed) or by invalid (records not passed the checks are removed).
 
 ODS checks are:
-    1 - all supplied record entries have the right "name"
-    2 - all entries are present and have the right type
-    3 - sources above horizon
-    4 - observations don't overlap
+    1. all supplied record entries have the right "name"
+    2. all entries are present and have the right type
+    3. sources above horizon
+    4. observations don't overlap
 
 Standard pip install.
 
 The presumed workflow (as shown in odsuder.py and can be done in one call) is:
-1 - read in an existing ODS file
-2 - set the defaults you want (either a json file with default values or ':from_ods')
-3 - add entries from a data file or can add on command line
-4 - remove entries before a time (likely 'now')
-5 - write the new ods file (give same filename to overwrite)
+1. read in an existing ODS file
+2. set the defaults you want (either a json file with default values or ':from_ods')
+3. add entries from a data file or can add on command line
+4. remove entries before a time (likely 'now')
+5. write the new ods file (give same filename to overwrite)
 
 E.g.
-odsuser.py -o ods_ata.json -d :from_ods -f obs.txt -i -t now -w ods_new.json
-odsuser.py -d sites.json:ata -f obs.txt -i -t now -w ods_new.json
+`odsuser.py -o ods_ata.json -d :from_ods -f obs.txt -i -t now -w ods_new.json`
+`odsuser.py -d sites.json:ata -f obs.txt -i -t now -w ods_new.json`
 
 ACKNOWLEDGEMENTS
 This software was developed with support from the National Science Foundation:
