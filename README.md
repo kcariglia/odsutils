@@ -2,7 +2,7 @@
 
 This reads, writes, updates and checks ODS lists.
 
-ODS list are a list of ODS records.
+ODS lists are a list of ODS records.
 
 An ODS file is a json file, with the the ODS list contained under the top-level key "ods_data"
 
