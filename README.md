@@ -14,10 +14,10 @@ Reading an ODS file, will start a new/different class ODS list.
 Files may be culled by provided a time (records ending before that time are removed) or by invalid (records not passed the checks are removed).
 
 ODS checks are:
-    1. all supplied record entries have the right "name"
-    2. all entries are present and have the right type
-    3. sources above horizon
-    4. observations don't overlap
+1. all supplied record entries have the right "name"
+2. all entries are present and have the right type
+3. sources above horizon
+4. observations don't overlap
 
 Standard pip install.
 
@@ -29,7 +29,9 @@ The presumed workflow (as shown in odsuder.py and can be done in one call) is:
 5. write the new ods file (give same filename to overwrite)
 
 E.g.
+
 `odsuser.py -o ods_ata.json -d :from_ods -f obs.txt -i -t now -w ods_new.json`
+
 `odsuser.py -d sites.json:ata -f obs.txt -i -t now -w ods_new.json`
 
 ACKNOWLEDGEMENTS
