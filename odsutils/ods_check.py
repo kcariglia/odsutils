@@ -72,7 +72,27 @@ class ODSCheck(Base):
                 valid_records.append(ctr)
         return valid_records
     
-    def observation(self, rec, el_lim_deg=10.0, dt_sec=120, show_plot=False):
+    def observation(self, rec, el_lim_deg=10.0, dt_sec=120.0, show_plot=False):
+        """
+        Determine whether an ODS record represents a source above the horizon.
+
+        Parameters
+        ----------
+        rec : dict
+            ODS record
+        el_lim_deg : float
+            Elevation limit that represents "above the horizon"
+        dt_sec : float
+            Time step for ephemerides check.
+        show_plot : bool
+            Show the plot of ephemerides.
+
+        Return
+        ------
+        tuple or False
+            False if never above the horizon, otherwise a tuple containing the limiting times within the record span.
+
+        """
         from astropy.coordinates import EarthLocation, AltAz, SkyCoord
         import astropy.units as u
         from numpy import where
@@ -103,6 +123,25 @@ class ODSCheck(Base):
         return (times[above_horizon[0]].datetime.isoformat(), times[above_horizon[-1]].datetime.isoformat())
     
     def continuity(self, ods, time_offset_sec=1, adjust='stop'):
+        """
+        Check whether records overlap.
+
+        This assumes that the list is fairly reasonable and doesn't do anything very smart at this point.
+
+        Parameters
+        ----------
+        ods : list
+            ODS list of records
+        time_offset_sec : float
+            Time used to offset overlapping entries
+        adjust : str
+            Adjust 'start' or 'stop'
+
+        Return
+        ------
+        Adjusted ODS list of records
+
+        """
         if adjust not in ['start', 'stop']:
             self.qprint(f'WARNING: Invalid adjust spec - {adjust}')
             return ods
