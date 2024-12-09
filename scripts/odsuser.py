@@ -14,8 +14,11 @@ ap.add_argument('--sep', help="Separator for the data file", default='\s+')
 ap.add_argument('--replace_char', help="Replace character in data file column header names", default=None)
 ap.add_argument('--header_map', help="Name of json file that maps data file headers to ODS keys", default=None)
 # Types of "culling/updating"
-ap.add_argument('-u', '--update_el', help="Updated for above elevation limit (provide el_limit in deg)", default=False)
-ap.add_argument('--dt_sec', help="Time step in seconds to do elevation check.", default=120)
+ap.add_argument('-u', '--update_el', help="Update flag for above elevation limit)", action='store_true')
+ap.add_argument('--el_lim', help="Elevation limit in deg", type=float, default=10.0)
+ap.add_argument('--dt_sec', help="Time step in seconds to do elevation check.", type=float, default=120.)
+ap.add_argument('-c', '--continuity', help="Check and update based on record continuity", action='store_true')
+ap.add_argument('--adjust', help="Adjust start or stop for continuity", choices=['start', 'stop'], default='start')
 ap.add_argument('-t', '--time_cull', help="Cull existing ods file on time - 'now' or isoformat", default=False)
 ap.add_argument('-i', '--invalid_cull', help="Cull ods of invalid entries", action='store_true')
 # Output
@@ -68,8 +71,11 @@ if args.time_cull:
 if args.invalid_cull:
     ods.cull_ods_by_invalid()
 
+if args.continuity:
+    ods.update_by_continuity(adjust=args.adjust)
+
 if args.update_el:
-    ods.update_by_elevation(el_lim_deg=float(args.update_el), dt_sec=args.dt_sec)
+    ods.update_by_elevation(el_lim_deg=args.el_lim, dt_sec=args.dt_sec)
 
 if args.view:
     ods.view_ods(number_per_block=args.block)

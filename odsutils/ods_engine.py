@@ -130,6 +130,10 @@ class ODS(Base):
             plt.axis(ymin = el_lim_deg)
             plt.legend()
 
+    def update_by_continuity(self, time_offset_sec=1, adjust='start'):
+        self.ods = self.check.continuity(self.ods, time_offset_sec=time_offset_sec, adjust=adjust)
+        self.number_of_records = len(self.ods)
+
     def cull_ods_by_time(self, cull_time='now'):
         """
         Remove entries with end times before cull_time.  Overwrites self.ods.
