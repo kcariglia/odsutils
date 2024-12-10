@@ -33,6 +33,18 @@ def read_data_file(file_name, sep='\s+', replace_char=None, header_map=None):
     return data
 
 
+def write_data_file(file_name, ods, std, sep=' '):
+    header = list(std.ods_fields.keys())
+    with open(file_name, 'w') as fp:
+        print(sep.join(header), file=fp)
+        for rec in ods:
+            row = []
+            for key in header:
+                row.append(str(rec[key]))
+            print(sep.join(row), file=fp)
+
+
+
 def generate_observation_times(start, obs_len_sec):
     from astropy.time import Time, TimeDelta
     times = []
