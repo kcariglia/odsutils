@@ -33,13 +33,12 @@ def read_data_file(file_name, sep='\s+', replace_char=None, header_map=None):
     return data
 
 
-def write_data_file(file_name, ods, std, sep=' '):
-    header = list(std.ods_fields.keys())
+def write_data_file(file_name, ods, cols, sep=' '):
     with open(file_name, 'w') as fp:
-        print(sep.join(header), file=fp)
+        print(sep.join(cols), file=fp)
         for rec in ods:
             row = []
-            for key in header:
+            for key in cols:
                 row.append(str(rec[key]))
             print(sep.join(row), file=fp)
 
