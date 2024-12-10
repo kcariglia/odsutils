@@ -16,8 +16,9 @@ ODS lists may be updated/culled based on a few checks.
 ODS checks are:
 1. all supplied record entries have the right "name"
 2. all entries are present and have the right type
-3. sources above horizon
-4. observations don't overlap
+3. time fields are parseable by astropy.Time
+4. sources above horizon (update_by_elevation)
+5. observations don't overlap (update_by_continuity)
 
 Standard pip install.
 

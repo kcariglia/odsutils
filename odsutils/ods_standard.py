@@ -28,7 +28,8 @@ class Standard_Version_A:
         'notes': str
     }
 
-    meta_fields = {'data': 'ods_data'}
+    meta_fields = {'data_key': 'ods_data',
+                   'time_fields': ['src_start_utc', 'src_end_utc']}
 
     def __init__(self):
         self.transfer_keys = {
@@ -84,6 +85,7 @@ class Standard:
         if self.version == 'A':
             self.standard = Standard_Version_A()
         self.ods_fields = self.standard.fields
-        self.data_key = self.standard.meta_fields['data']
+        self.data_key = self.standard.meta_fields['data_key']
+        self.time_fields = self.standard.meta_fields['time_fields']
         for key, val in self.standard.transfer_keys.items():
             setattr(self, key, val)

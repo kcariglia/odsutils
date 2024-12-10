@@ -18,6 +18,7 @@ class ODSCheck(Base):
             1 - keys are all valid ODS fields
             2 - values are all consistent with ODS field type
             3 - all fields are present
+            4 - time fields are parseable by astropy.time.Time
 
         Parameters
         ----------
@@ -51,6 +52,11 @@ class ODSCheck(Base):
                 except ValueError:
                     self.qprint(f"{rec[key]} is wrong type for {key} {ending}")
                     is_valid = False
+        for key in self.standard.time_fields:
+            try:
+                _ = Time(rec[key])
+            except ValueError:
+                self.qprint(f"{rec[key]} is not a valid astropy.time.Time input format {ending}")
         return is_valid
 
     def ods(self, ods):
