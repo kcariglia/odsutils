@@ -32,6 +32,22 @@ def read_data_file(file_name, sep=']s+]', replace_char=None, header_map=None):
 
     return data
 
+
+def generate_observation_times(start, obs_len_sec):
+    from astropy.time import Time, TimeDelta
+    times = []
+    if start == 'now':
+        start = Time.now()
+    else:
+        start = Time(start)
+    current = start
+    for obs in obs_len_sec:
+        stop = current + TimeDelta(obs, format='sec')
+        times.append([current, stop])
+        current += TimeDelta(obs+1, format='sec')
+    return times
+
+
 class Base:
     def qprint(self, msg, end='\n'):
         if not hasattr(self, 'quiet'):

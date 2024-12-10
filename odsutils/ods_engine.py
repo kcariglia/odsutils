@@ -155,6 +155,41 @@ class ODS(tools.Base):
         self.ods = self.check.continuity(self.ods, time_offset_sec=time_offset_sec, adjust=adjust)
         self.number_of_records = len(self.ods)
 
+    def update_ods_times(self, times=None, start=None, obs_len_sec=None):
+        """
+        Reset the src_start_utc and src_stop_utc fields in self.ods.
+
+        Parameter
+        ---------
+        times : list of lists/None or None
+            If not None, each list item contains new start/stop for that record in the list or skip if None.
+            Must be len(self.ods)
+        start : str
+            Start time in isoformat or 'now'
+        obs_len_sec : str, list or None
+            If 'start' is not None, this is the length/observation
+            If list, must be len(self.ods)
+
+        """
+        if times is not None:
+            if len(times) != self.number_of_records:
+                self.qprint("WARNING: times list doesn't have the right number of entries")
+                return
+        elif start is None or obs_len_sec is None:
+            self.qprint("WARNING:  haven't specified enough parameters.")
+            return
+        else:
+            if not isinstance(obs_len_sec, list):
+                obs_len_sec = [obs_len_sec] * self.number_of_records
+            elif len(obs_len_sec) != self.number_of_records:
+                self.qprint("WARNING: obs_len_sec doesn't have the right number of entries")
+                return
+            times = tools.generate_observation_times(start, obs_len_sec)
+        for i, tt in enumerate(times):
+            this_update = {self.standard.start: tt[0].datetime.isoformat(timespec='seconds'),
+                           self.standard.stop: tt[1].datetime.isoformat(timespec='seconds')}
+            self.ods[i].update(this_update)
+
     def cull_ods_by_time(self, cull_time='now'):
         """
         Remove entries with end times before cull_time.  Overwrites self.ods.
