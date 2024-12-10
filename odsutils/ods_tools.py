@@ -14,7 +14,7 @@ def write_json_file(file_name, payload, indent=2):
         json.dump(payload, fp, indent=indent)
 
 
-def read_data_file(file_name, sep=']s+]', replace_char=None, header_map=None):
+def read_data_file(file_name, sep='\s+', replace_char=None, header_map=None):
     import pandas as pd
 
     data = pd.read_csv(file_name, sep=sep)
