@@ -106,7 +106,7 @@ class ODSCheck(Base):
             times.append(this_step)
             this_step += dt
         times = Time(times)
-        location = EarthLocation(lat = float(rec[self.standard.lat]) * u.deg, lon = float(rec[self.standard.lat]) * u.deg, height = float(rec[self.standard.ele]) * u.m)
+        location = EarthLocation(lat = float(rec[self.standard.lat]) * u.deg, lon = float(rec[self.standard.lon]) * u.deg, height = float(rec[self.standard.ele]) * u.m)
 
         aa = AltAz(location=location, obstime=times)
         coord = SkyCoord(float(rec[self.standard.ra]) * u.deg, float(rec[self.standard.dec]) * u.deg)
@@ -120,7 +120,7 @@ class ODSCheck(Base):
             plt.plot(obs.az, obs.alt, label=rec[self.standard.source])
             plt.figure(self.standard.plot_timeel)
             plt.plot(times.datetime, obs.alt, label=rec[self.standard.source])
-        return (times[above_horizon[0]].datetime.isoformat(), times[above_horizon[-1]].datetime.isoformat())
+        return (times[above_horizon[0]].datetime.isoformat(timespec='seconds'), times[above_horizon[-1]].datetime.isoformat(timespec='seconds'))
     
     def continuity(self, ods, time_offset_sec=1, adjust='stop'):
         """

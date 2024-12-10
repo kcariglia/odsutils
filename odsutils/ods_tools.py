@@ -43,7 +43,6 @@ def write_data_file(file_name, ods, cols, sep=' '):
             print(sep.join(row), file=fp)
 
 
-
 def generate_observation_times(start, obs_len_sec):
     from astropy.time import Time, TimeDelta
     times = []
