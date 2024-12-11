@@ -25,6 +25,7 @@ ap.add_argument('-i', '--invalid_cull', help="Cull ods of invalid entries", acti
 # Output
 ap.add_argument('-w', '--write', help="Write ods to this file name", default=False)
 ap.add_argument('-v', '--view', help="View ods", action='store_true')
+ap.add_argument('-g', '--graph', help="Show text plot of ods timing.", action='store_true')
 ap.add_argument('--block', help="Number of ods records to show in each view block", default=7)
 ap.add_argument('-s', '--std_show', help="Show the tems of an ODS record", action='store_true')
 # ODS fields
@@ -80,6 +81,9 @@ if args.update_el:
 
 if args.view:
     ods.view_ods(number_per_block=args.block)
+
+if args.graph:
+    ods.graph_ods()
 
 if args.write:
     ods.write_ods(file_name=args.write)
