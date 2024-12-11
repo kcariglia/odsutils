@@ -7,10 +7,13 @@ class ODSCheck(Base):
     Utilities to check ODS records.
 
     """
+    prefixes = {'n': '', 'w': 'WARNING: ', 'e': 'ERROR: '}
 
-    def __init__(self, standard, quiet=False):
+    def __init__(self, standard, alert='warn'):
         self.standard = standard
-        self.quiet = quiet
+        self.alert = alert
+        self.quiet = True if alert == 'none' else False
+        self.pre = self.prefixes[alert[0].lower()]
 
     def record(self, rec, ctr=None):
         """
@@ -37,26 +40,27 @@ class ODSCheck(Base):
         is_valid = True
         for key in rec:  # check that all supplied keys are valid and not None
             if key not in self.standard.ods_fields:
-                self.qprint(f"{key} not an ods_field {ending}")
+                self.qprint(f"{self.pre}{key} not an ods_field {ending}")
                 is_valid = False
             elif rec[key] is None:
-                self.qprint(f"Value for {key} is None {ending}")
+                self.qprint(f"{self.pre}Value for {key} is None {ending}")
                 is_valid = False
         for key in self.standard.ods_fields:  # Check that all keys are provided for a rec and type is correct
             if key not in rec:
-                self.qprint(f"Missing {key} {ending}")
+                self.qprint(f"{self.pre}Missing {key} {ending}")
                 is_valid = False
             if rec[key] is not None:
                 try:
                     _ = self.standard.ods_fields[key](rec[key])
                 except ValueError:
-                    self.qprint(f"{rec[key]} is wrong type for {key} {ending}")
+                    self.qprint(f"{self.pre}{rec[key]} is wrong type for {key} {ending}")
                     is_valid = False
         for key in self.standard.time_fields:
             try:
                 _ = Time(rec[key])
             except ValueError:
-                self.qprint(f"{rec[key]} is not a valid astropy.time.Time input format {ending}")
+                self.qprint(f"{self.pre}{rec[key]} is not a valid astropy.time.Time input format {ending}")
+                is_valid = False
         return is_valid
 
     def ods(self, ods):
@@ -169,5 +173,5 @@ class ODSCheck(Base):
                 adjusted_entries[i].update({self.standard.stop: this_stop.datetime.isoformat()})
                 adjusted_entries[i+1].update({self.standard.start: next_start.datetime.isoformat()})
                 if next_start < this_stop:
-                    self.qprint("WARNING: New start is before stop so still need to fix.")
+                    self.qprint(f"{self.pre}New start is before stop so still need to fix.")
         return adjusted_entries

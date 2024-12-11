@@ -11,12 +11,23 @@ class ODS(tools.Base):
     Maintains an internal self.ods record list that gets manipulated.
 
     """
-    def __init__(self, quiet=False, version='latest'):
+    def __init__(self, quiet=False, version='latest', alert='warn'):
+        """
+        Parameters
+        ----------
+        quiet : bool
+            If True, quiets printing
+        version : str
+            Version of ODS standard
+        alert : str
+            Action for ODS checking ['none', 'warn', 'error']
+
+        """
         self.quiet = quiet
         self.defaults = {}
         self.reset_ods()
         self.standard = Standard(version)  # Will modify/etc as NRAO defines
-        self.check = ODSCheck(self.standard, self.quiet)
+        self.check = ODSCheck(self.standard, alert)
 
     def reset_ods(self):
         self.ods = []
@@ -345,6 +356,12 @@ class ODS(tools.Base):
                 row = [key] + [self.ods[i][key] for i in blk]
                 data.append(row)
             print(tabulate(data))
+    
+    def graph_ods(self):
+        """
+        Text-based graph of ods times/targets.
+        
+        """
 
     def write_ods(self, file_name):
         """
