@@ -43,6 +43,23 @@ def write_data_file(file_name, ods, cols, sep=' '):
             print(sep.join(row), file=fp)
 
 
+def sort_entries(ods, terms):
+    from copy import copy
+
+    entries = {}
+    for i, rec in enumerate(ods):
+        sort_key = []
+        for key in terms:
+            sort_key.append(rec[key])
+        sort_key.append(i)
+        sort_key = tuple(sort_key)
+        entries[sort_key] = i
+    adjusted_entries = []
+    for key in sorted(entries.keys()):
+        adjusted_entries.append(copy(ods[entries[key]]))
+    return adjusted_entries
+
+
 def generate_observation_times(start, obs_len_sec):
     from astropy.time import Time, TimeDelta
     times = []

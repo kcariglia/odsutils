@@ -1,8 +1,8 @@
-from .ods_tools import Base
+from . import ods_tools as tools
 from astropy.time import Time, TimeDelta
 
 
-class ODSCheck(Base):
+class ODSCheck(tools.Base):
     """
     Utilities to check ODS records.
 
@@ -155,13 +155,7 @@ class ODSCheck(Base):
         if adjust not in ['start', 'stop']:
             self.qprint(f'WARNING: Invalid adjust spec - {adjust}')
             return ods
-        from copy import copy
-        entries = {}
-        for i, rec in enumerate(ods):
-            entries[(Time(rec[self.standard.start]).datetime, Time(rec[self.standard.stop]).datetime, i)] = i
-        adjusted_entries = []
-        for key in sorted(entries.keys()):
-            adjusted_entries.append(copy(ods[entries[key]]))
+        adjusted_entries = tools.sort_entries(ods, [self.standard.start, self.standard.stop])
         for i in range(len(adjusted_entries) - 1):
             this_stop = Time(adjusted_entries[i][self.standard.stop])
             next_start = Time(adjusted_entries[i+1][self.standard.start])
