@@ -1,4 +1,5 @@
 import json
+from astropy.time import Time
 
 
 def read_json_file(filename):
@@ -42,8 +43,44 @@ def write_data_file(file_name, ods, cols, sep=' '):
                 row.append(str(rec[key]))
             print(sep.join(row), file=fp)
 
+def make_time(t):
+    """
+    Parameter
+    ---------
+    t : anything parseable by astropy.time.Time or 'now'
+
+    Return
+    ------
+    astropy.time.Time
+
+    """
+    from astropy.time import Time
+    if t == 'now':
+        return Time.now()
+    try:
+        return Time(t)
+    except ValueError:
+        print("NEED TO DO SOME CHECKING, E.G. timezone aware etc")
+        raise ValueError(f"Error in make time {t}")
+
 
 def sort_entries(ods, terms):
+    """
+    Sort the ods records with the supplied list of terms (keys in the record) -- the position number is last
+    to make sure there is a unique key.
+
+    Parameters
+    ----------
+    ods : list of dict
+        A list of dictionaries with the records.
+    terms : list
+        The list of dictionary keys upon which to sort.
+
+    Return
+    ------
+    Sorted version of the input list.
+
+    """
     from copy import copy
 
     entries = {}
@@ -61,12 +98,9 @@ def sort_entries(ods, terms):
 
 
 def generate_observation_times(start, obs_len_sec):
-    from astropy.time import Time, TimeDelta
+    from astropy.time import TimeDelta
     times = []
-    if start == 'now':
-        start = Time.now()
-    else:
-        start = Time(start)
+    start = make_time(start)
     current = start
     for obs in obs_len_sec:
         stop = current + TimeDelta(obs, format='sec')

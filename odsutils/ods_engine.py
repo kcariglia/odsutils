@@ -211,15 +211,11 @@ class ODS(tools.Base):
             isoformat time string
 
         """
-        from astropy.time import Time
-        if cull_time == 'now':
-            cull_time = Time.now()
-        else:
-            cull_time = Time(cull_time)
+        cull_time = tools.make_time(cull_time)
         self.qprint(f"Culling ODS for {cull_time}:", end='  ')
         culled_ods = []
         for rec in self.ods:
-            end_time = Time(rec['src_end_utc'])
+            end_time = tools.make_time(rec['src_end_utc'])
             if end_time > cull_time:
                 culled_ods.append(rec)
         self.ods = copy(culled_ods)
@@ -357,11 +353,22 @@ class ODS(tools.Base):
                 data.append(row)
             print(tabulate(data))
     
-    def graph_ods(self):
+    def graph_ods(self, numticks=140):
         """
         Text-based graph of ods times/targets.
-        
+
         """
+        sorted_ods = tools.sort_entries(self.ods, [self.standard.start, self.standard.stop])
+        ods_start = tools.make_time(sorted_ods[0][self.standard.start])
+        dt = ((tools.make_time(sorted_ods[-1][self.standard.stop]) - ods_start) / numticks).to('second').value
+        for rec in self.ods:
+            row = [' '] * numticks
+            starting = int((tools.make_time(rec[self.standard.start])  -  ods_start).to('second').value / dt)
+            ending = int((tools.make_time(rec[self.standard.stop]) - ods_start).to('second').value / dt)
+            for star in range(starting, ending):
+                row[star] = '*'
+            print(f"{rec[self.standard.source]:10s} {''.join(row)}")
+
 
     def write_ods(self, file_name):
         """

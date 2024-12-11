@@ -1,5 +1,5 @@
 from . import ods_tools as tools
-from astropy.time import Time, TimeDelta
+from astropy.time import TimeDelta
 
 
 class ODSCheck(tools.Base):
@@ -57,7 +57,7 @@ class ODSCheck(tools.Base):
                     is_valid = False
         for key in self.standard.time_fields:
             try:
-                _ = Time(rec[key])
+                _ = tools.make_time(rec[key])
             except ValueError:
                 self.qprint(f"{self.pre}{rec[key]} is not a valid astropy.time.Time input format {ending}")
                 is_valid = False
@@ -107,15 +107,15 @@ class ODSCheck(tools.Base):
         import astropy.units as u
         from numpy import where
 
-        start = Time(rec[self.standard.start])
-        stop = Time(rec[self.standard.stop])
+        start = tools.make_time(rec[self.standard.start])
+        stop = tools.make_time(rec[self.standard.stop])
         dt = TimeDelta(dt_sec, format='sec')
         times = []
         this_step = start
         while(this_step < stop):
             times.append(this_step)
             this_step += dt
-        times = Time(times)
+        times = tools.make_time(times)
         location = EarthLocation(lat = float(rec[self.standard.lat]) * u.deg, lon = float(rec[self.standard.lon]) * u.deg, height = float(rec[self.standard.ele]) * u.m)
 
         aa = AltAz(location=location, obstime=times)
@@ -157,8 +157,8 @@ class ODSCheck(tools.Base):
             return ods
         adjusted_entries = tools.sort_entries(ods, [self.standard.start, self.standard.stop])
         for i in range(len(adjusted_entries) - 1):
-            this_stop = Time(adjusted_entries[i][self.standard.stop])
-            next_start = Time(adjusted_entries[i+1][self.standard.start])
+            this_stop = tools.make_time(adjusted_entries[i][self.standard.stop])
+            next_start = tools.make_time(adjusted_entries[i+1][self.standard.start])
             if next_start < this_stop:  # Need to adjust
                 if adjust == 'start':
                     next_start = this_stop + TimeDelta(time_offset_sec, format='sec')
