@@ -371,7 +371,7 @@ class ODS(tools.Base):
             ending = int((tools.make_time(rec[self.standard.stop]) - ods_start).to('second').value / dt)
             for star in range(starting, ending):
                 row[star] = '*'
-            print(f"{rec[self.standard.source]:10s} {''.join(row)}")
+            print(f"{rec[self.standard.source]:{stroff}s} {''.join(row)}")
         spaces = ' ' * (numticks + stroff)
         print(f"{spaces}|")
         spaces = ' ' * (numticks + stroff - 10)
