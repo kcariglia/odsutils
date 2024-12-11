@@ -358,9 +358,13 @@ class ODS(tools.Base):
         Text-based graph of ods times/targets.
 
         """
+        stroff = 10
         sorted_ods = tools.sort_entries(self.ods, [self.standard.start, self.standard.stop])
         ods_start = tools.make_time(sorted_ods[0][self.standard.start])
-        dt = ((tools.make_time(sorted_ods[-1][self.standard.stop]) - ods_start) / numticks).to('second').value
+        ods_stop = tools.make_time(sorted_ods[-1][self.standard.stop])
+        dt = ((ods_stop - ods_start) / numticks).to('second').value
+        print(f" {ods_start.datetime.isoformat(timespec='seconds')}")
+        print(f"{' ':{stroff}s} |")
         for rec in self.ods:
             row = [' '] * numticks
             starting = int((tools.make_time(rec[self.standard.start])  -  ods_start).to('second').value / dt)
@@ -368,6 +372,10 @@ class ODS(tools.Base):
             for star in range(starting, ending):
                 row[star] = '*'
             print(f"{rec[self.standard.source]:10s} {''.join(row)}")
+        spaces = ' ' * (numticks + stroff)
+        print(f"{spaces}|")
+        spaces = ' ' * (numticks + stroff - 10)
+        print(f"{spaces}{ods_stop.datetime.isoformat(timespec='seconds')}")
 
 
     def write_ods(self, file_name):
