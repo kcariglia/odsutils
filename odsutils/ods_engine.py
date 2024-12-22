@@ -53,14 +53,14 @@ class ODS(tools.Base):
 
         """
         if isinstance(ods_input, dict):
-            self.ods = copy(ods_input)
-            self.ods_file_name = 'input'
+            input_ods_data = copy(ods_input)
+            self.ods_file_name = 'json input'
         elif isinstance(ods_input, str):
             self.ods_file_name = ods_input
-            input_ods_data = tools.read_json_file(self.ods_file_name)
-            self.ods = input_ods_data[self.standard.data_key]  # This is the internal list of ods records
+            input_ods_data = tools.read_json_file(self.ods_file_name)    
         else:
             raise ValueError(f"Invalid ODS type {type(ods_input)}")
+        self.ods = input_ods_data[self.standard.data_key]  # This is the internal list of ods records
         self.number_of_records = len(self.ods)
         self.valid_records = self.check.ods(self.ods)
         self.qprint(f"Read {self.number_of_records} records from {self.ods_file_name}")
