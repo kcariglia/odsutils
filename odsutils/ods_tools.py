@@ -42,6 +42,17 @@ def write_data_file(file_name, ods, cols, sep=' '):
                 row.append(str(rec[key]))
             print(sep.join(row), file=fp)
 
+
+def get_json_url(url):
+    import requests
+
+    try:
+        xxx = requests.get(url)
+    except Exception as e:
+        print(f"Error reading {url}:  {e}")
+        return
+    return xxx.json()
+
 def make_time(t):
     """
     Parameter

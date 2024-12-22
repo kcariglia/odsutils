@@ -142,6 +142,10 @@ class ODS(tools.Base):
         rec.update(self.defaults)
         return rec
 
+    def online_ods_check(self, url="https://www.seti.org/sites/default/files/HCRO/ods.json"):
+        self.read_ods(tools.get_url(url))
+        print(ODS.ods)
+
     ##############################################MODIFY#########################################
     # Methods that modify the existing self.ods
 
