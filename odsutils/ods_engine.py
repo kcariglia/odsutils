@@ -142,9 +142,26 @@ class ODS(tools.Base):
         rec.update(self.defaults)
         return rec
 
-    def online_ods_check(self, url="https://www.seti.org/sites/default/files/HCRO/ods.json"):
-        self.read_ods(tools.get_url(url))
-        print(ODS.ods)
+    def online_ods_log(self, url="https://www.seti.org/sites/default/files/HCRO/ods.json", logfile='online_ods_log.txt', add_header=False):
+        from astropy.time import Time
+        from time import time
+        now = Time(time(), format='unix')
+        self.read_ods(tools.get_json_url(url))
+        header = ','.join(self.standard.ods_fields)
+        with open(logfile, 'a') as fp:
+            if add_header:
+                print(header, file=fp)
+            for record in self.ods:
+                start = Time(record[self.standard.start], scale='utc')
+                stop = Time(record[self.standard.stop], scale='utc')
+                if now > stop or now < start:
+                    continue
+                else:
+                    reclist = []
+                    for col in self.standard.ods_fields:
+                        reclist.append(str(record[col]))
+                    print(','.join(reclist), file=fp)
+
 
     ##############################################MODIFY#########################################
     # Methods that modify the existing self.ods

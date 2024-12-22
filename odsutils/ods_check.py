@@ -169,10 +169,3 @@ class ODSCheck(tools.Base):
                 if next_start < this_stop:
                     self.qprint(f"{self.pre}New start is before stop so still need to fix.")
         return adjusted_entries
-    
-    def online_ods_check(self, url="https://www.seti.org/sites/default/files/HCRO/ods.json"):
-        from . import onutil
-        from odsutils import ods_engine
-        ODS = ods_engine.ODS()
-        ODS.read_ods(onutil.get_url(url))
-        print(ODS.ods)
