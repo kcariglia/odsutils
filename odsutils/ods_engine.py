@@ -34,14 +34,14 @@ class ODS(tools.Base):
         self.valid_records = []
         self.number_of_records = 0
 
-    def read_ods(self, ods_file_name):
+    def read_ods(self, ods_input):
         """
-        Read in an existing ods file, check it and pull out input sets
+        Read in an existing ods file or dictionary, check it and pull out input sets
 
         Parameter
         ---------
-        ods_file_name : str
-            Name of ods json file
+        ods_input : str or dict
+            Name of ods json file or dict
 
         Attributes
         ----------
@@ -52,9 +52,13 @@ class ODS(tools.Base):
         see self._gen_input_sets for others
 
         """
-        self.ods_file_name = ods_file_name
-        input_ods_data = tools.read_json_file(self.ods_file_name)
-        self.ods = input_ods_data[self.standard.data_key]  # This is the internal list of ods records
+        if isinstance(ods_input, dict):
+            self.ods = copy(ods_input)
+            self.ods_file_name = 'input'
+        elif isinstance(ods_input, str):
+            self.ods_file_name = ods_input
+            input_ods_data = tools.read_json_file(self.ods_file_name)
+            self.ods = input_ods_data[self.standard.data_key]  # This is the internal list of ods records
         self.number_of_records = len(self.ods)
         self.valid_records = self.check.ods(self.ods)
         self.qprint(f"Read {self.number_of_records} records from {self.ods_file_name}")
@@ -314,7 +318,7 @@ class ODS(tools.Base):
         header_map : None, dict, str
             replace column header names with those provided
             - str: read json file
-            - dict: {<datafile_header_name>: <ods_header_name>}
+            - dict: {<ods_header_name>: <datafile_header_name>}
 
         """
         self.data_file_name = data_file_name

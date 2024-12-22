@@ -1,5 +1,4 @@
 import json
-from astropy.time import Time
 
 
 def read_json_file(filename):
@@ -18,7 +17,7 @@ def write_json_file(file_name, payload, indent=2):
 def read_data_file(file_name, sep='\s+', replace_char=None, header_map=None):
     import pandas as pd
 
-    data = pd.read_csv(file_name, sep=sep)
+    data = pd.read_csv(file_name, sep=sep, skipinitialspace=True)
 
     if replace_char is not None:
         if isinstance(replace_char, str):
