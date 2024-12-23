@@ -142,14 +142,21 @@ class ODS(tools.Base):
         rec.update(self.defaults)
         return rec
 
-    def online_ods_monitor(self, url="https://www.seti.org/sites/default/files/HCRO/ods.json", logfile='online_ods_log.txt', add_header=False):
+    def online_ods_monitor(self, url="https://www.seti.org/sites/default/files/HCRO/ods.json", logfile='online_ods_log.txt'):
         from astropy.time import Time
         from time import time
         now = Time(time(), format='unix')
         self.read_ods(tools.get_json_url(url))
         header = ','.join(self.standard.ods_fields)
+        is_header = False
+        existing_entries = []
+        with open(logfile, 'r') as fp:
+            for line in fp:
+                existing_entries.append(line)
+                if line == header:
+                    is_header = True
         with open(logfile, 'a') as fp:
-            if add_header:
+            if not is_header:
                 print(header, file=fp)
             for record in self.ods:
                 start = Time(record[self.standard.start], scale='utc')
@@ -160,7 +167,9 @@ class ODS(tools.Base):
                     reclist = []
                     for col in self.standard.ods_fields:
                         reclist.append(str(record[col]))
-                    print(','.join(reclist), file=fp)
+                    this_line = ','.join(reclist)
+                    if this_line not in existing_entries:
+                        print(this_line, file=fp)
 
 
     ##############################################MODIFY#########################################
