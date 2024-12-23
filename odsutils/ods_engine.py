@@ -142,7 +142,7 @@ class ODS(tools.Base):
         rec.update(self.defaults)
         return rec
 
-    def online_ods_log(self, url="https://www.seti.org/sites/default/files/HCRO/ods.json", logfile='online_ods_log.txt', add_header=False):
+    def online_ods_monitor(self, url="https://www.seti.org/sites/default/files/HCRO/ods.json", logfile='online_ods_log.txt', add_header=False):
         from astropy.time import Time
         from time import time
         now = Time(time(), format='unix')
