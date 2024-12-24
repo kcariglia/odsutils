@@ -54,6 +54,16 @@ def get_json_url(url):
     return xxx.json()
 
 
+def listify(x, d={}, sep=','):
+    if isinstance(x, list) or x is None:
+        return x
+    if isinstance(x, str) and x in d:
+        return d[x]
+    if isinstance(x, str):
+        return x.split(sep)
+    return [x]
+
+
 def make_time(t):
     """
     Parameter

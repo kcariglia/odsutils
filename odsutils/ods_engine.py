@@ -8,6 +8,17 @@ class ODSInstance:
     """Very light class containing the data, some core classes and metadata -- most handling is done within ODS."""
 
     def __init__(self, name, version='latest', input_from='init'):
+        """
+        Parameters
+        ----------
+        name : str
+            Name of instance -- the key used in ODS
+        version : str
+            Standard version to use.
+        input_from : str
+            WHere the instance came from (filename, etc)
+
+        """
         self.name = name
         self.standard = ods_standard.Standard(version=version)
         self.input = input_from
@@ -35,8 +46,10 @@ class ODSInstance:
             List of ods records that is manipulated
         number_of_records : int
             Number of records in ods instance
-        self.input_sets : set
-            List of input sets and invalid keys
+        input_sets : set
+            List of input sets and invalid keys -- set in gen_info
+        number_of_records : int
+            Number of records (entries) -- set in gen_info
 
         """
         if isinstance(ods_input, dict):
@@ -52,6 +65,17 @@ class ODSInstance:
         return True
 
     def gen_info(self):
+        """
+        Get some extra info on the instance.
+
+        Attributes
+        ----------
+        input_sets : set
+            List of input sets and invalid keys -- set in gen_info
+        number_of_records : int
+            Number of records (entries) -- set in gen_info
+
+        """
         self.number_of_records = len(self.entries)
         for entry in self.entries:
             for key, val in entry.items():
@@ -154,36 +178,46 @@ class ODS(tools.Base):
         self.quiet = quiet
         self.version = version
         self.working_instance = working_instance
-        self.reset_ods_instances('init', version=version)
+        self.reset_ods_instances('all', version=version)
         self.defaults = {}
         self.check = ODSCheck(alert=alert, standard=self.ods[working_instance].standard)
 
-    def reset_ods_instances(self, instances='all', version='latest', delete_them=False):
-        if instances == 'init':
+    def reset_ods_instances(self, instances='all', version='latest'):
+        """
+        Resets the internal instance(s).
+
+        Parameters
+        ----------
+        instances : str, list
+            Instances to reset -- 'all'/list/csv-list
+        version : str
+            Standard version oto use
+
+        """
+        if instances == 'all':
             self.ods = {}
             self.ods_instance(name=self.working_instance, version=version)
             return
-        if instances == 'all':
-            instances = list(self.ods.keys())
-        elif isinstance(instances, str):
-            instances = instances.split(',')
-        for name in instances:
-            if name == self.working_instance:
-                self.ods[name] = self.ods_instance(name=self.working_instance, version=version)
-                if delete_them and not self.quiet:
-                    print(f"Won't delete {self.working_instance}")
-            elif name in self.ods:
-                if delete_them:
-                    del(self.ods[name])
-                else:
-                    self.ods[name] = self.ods_instance(name=name, version=version)
-            else:
-                if not self.quiet:
-                    print(f"{name} is not an instance.")
+        for name in tools.listify(instances):
+            if name in self.ods:
+                self.ods[name] = self.ods_instance(name=name, version=version)
+            elif not self.quiet:
+                print(f"{name} is not an instance.")
 
     def ods_instance(self, name, version='latest', set_as_working=False):
-        """Create a blank ODS instance and optionally set as the working instance."""
+        """
+        Create a blank ODS instance and optionally set as the working instance.
 
+        Parameters
+        ----------
+        name : str
+            Name of instance.
+        version : str
+            Standard version to use.
+        set_as_working : bool
+            Flag to reset the working_instance to this name.
+
+        """
         if name in self.ods:
             if not self.quiet:
                 print(f"{name} already exists -- try self.reset_ods_instances")
@@ -197,11 +231,33 @@ class ODS(tools.Base):
             self.update_working_instance(name)
     
     def update_working_instance(self, name):
+        """
+        Update the class working_instance name.
+        
+        Parameter
+        ---------
+        name : str
+            Name of instance
+
+        """
         self.working_instance = name
         if not self.quiet:
             print(f"The new ODS working instance is {self.working_instance}")
 
     def get_instance_name(self, name=None):
+        """
+        Return the class instance name to use.
+      
+        Parameter
+        ---------
+        name : str
+            Name of instance
+
+        Returns
+        -------
+        The instance name to use.
+    
+        """
         if name is None:
             return self.working_instance
         if name in self.ods:
@@ -210,8 +266,17 @@ class ODS(tools.Base):
             print(f"{name} does not exist -- try making it with self.ods_instance")
 
     def read_ods(self, ods_input, name=None):
-        """Read in ods data from a file or input dictionary in same format."""
+        """
+        Read in ods data from a file or input dictionary in same format.
 
+        Parameters
+        ----------
+        ods_input : str
+            ODS input, either filename of dictionary.
+        name : str, None
+            Name of instance to use
+
+        """
         name = self.get_instance_name(name)
         self.ods[name].read(ods_input)
         self.ods[name].valid_records = self.check.ods(self.ods[name])
@@ -267,6 +332,11 @@ class ODS(tools.Base):
 
         Not associated with an instance.
 
+        Parameter
+        ---------
+        name : str, None
+            Needed to get the appropriate standard.
+
         Return
         ------
         dict
@@ -281,6 +351,18 @@ class ODS(tools.Base):
         return rec
 
     def online_ods_monitor(self, url="https://www.seti.org/sites/default/files/HCRO/ods.json", logfile='online_ods_mon.txt'):
+        """
+        Checks the online ODS URL against a local log to update for active records.  Typically used in a crontab to monitor
+        the active ODS records posted.
+
+        Parameters
+        ----------
+        url : str
+            URL of online ODS server
+        logfile : str
+            Local logfile to use.
+
+        """
         self.ods_instance('from_web')
         self.read_ods(tools.get_json_url(url), name='from_web')
         self.cull_ods_by_time(name='from_web', cull_by='inactive')
@@ -293,6 +375,7 @@ class ODS(tools.Base):
                 self.add_from_list([entry], name='from_log')
 
         tools.write_data_file(logfile, self.ods['from_log'].entries, self.ods['from_log'].standard.ods_fields, sep=',')
+
 
     ##############################################MODIFY#########################################
     # Methods that modify the existing self.ods
