@@ -1,5 +1,7 @@
 DEFAULT_WORKING_INSTANCE = 'primary'
 LATEST = 'A'
+PLOT_AZEL = 'Az vs El'
+PLOT_TIMEEL = 'Time vs El'
 
 class Standard_Version_A:
     """
@@ -65,9 +67,6 @@ class Standard:
         else:
             self.version = version
         self.read_version()
-        # Probably not the best place to carry this, but...
-        self.plot_azel = 'Az vs El'
-        self.plot_timeel = 'Time vs El'
 
     def __str__(self):
         """Print out the keys/types of ods record"""
@@ -76,7 +75,9 @@ class Standard:
         data = []
         for key, val in self.ods_fields.items():
             data.append([key, val])
-        return tabulate(data, headers=['key', 'type'])
+        hdr = f"| STANDARD VERSION {self.version} |"
+        ddd = '-' * len(hdr)
+        return f"{ddd}\n{hdr}\n{ddd}\n" + tabulate(data, headers=['key', 'type'])
 
     def read_version(self):
         """

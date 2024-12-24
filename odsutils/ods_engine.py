@@ -409,12 +409,12 @@ class ODS(tools.Base):
         self.ods[name].valid_records = self.check.ods(self.ods[name])
         if show_plot:
             import matplotlib.pyplot as plt
-            plt.figure(self.ods[name].standard.plot_azel)
+            plt.figure(ods_standard.PLOT_AZEL)
             plt.xlabel('Azimuth [deg]')
             plt.ylabel('Elevation [deg]')
             plt.axis(ymin = el_lim_deg)
             plt.legend()
-            plt.figure(self.ods[name].standard.plot_timeel)
+            plt.figure(ods_standard.PLOT_TIMEEL)
             plt.xlabel('Time [UTC]')
             plt.ylabel('Elevation [deg]')
             plt.axis(ymin = el_lim_deg)
@@ -521,7 +521,7 @@ class ODS(tools.Base):
         ---------
         name : str, None
             Name of instance to use
-            
+
         """
         name = self.get_instance_name(name)
         self.qprint("Culling ODS for invalid records:", end='  ')
@@ -596,7 +596,7 @@ class ODS(tools.Base):
         self.qprint(f"Read {len(entries)} records from list.")
         self.valid_records = self.check.ods(self.ods[name])
 
-    def add_from_file(self, data_file_name, override=False, name=None, sep="\s+", replace_char=None, header_map=None):
+    def add_from_file(self, data_file_name, override=False, name=None, sep='auto', replace_char=None, header_map=None):
         """
         Append new records from a data file to self.ods; assumes the first line is a header.
 
@@ -621,6 +621,13 @@ class ODS(tools.Base):
             - dict: {<ods_header_name>: <datafile_header_name>}
 
         """
+        if sep == 'auto':
+            with open(data_file_name, 'r') as fp:
+                header = fp.readline()
+            for s in [',', '\t', ' ', ';']:
+                if s in header:
+                    sep = s
+                    break
         name = self.get_instance_name(name)
         self.data_file_name = data_file_name
         obs_list = tools.read_data_file(self.data_file_name, sep=sep, replace_char=replace_char, header_map=header_map)

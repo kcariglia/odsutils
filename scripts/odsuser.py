@@ -11,7 +11,7 @@ ap.add_argument('--version', help="Version to use", default='latest')
 ap.add_argument('--alert', help="Level for checking ('[n]one', '[w]arn', '[e]rror').", default='warn')
 # Data file options
 ap.add_argument('-f', '--data_file', help="Name of data file to read", default=None)
-ap.add_argument('--sep', help="Separator for the data file", default='\s+')
+ap.add_argument('--sep', help="Separator for the data file - 'auto' tries to determine from first line", default='auto')
 ap.add_argument('--replace_char', help="Replace character in data file column header names", default=None)
 ap.add_argument('--header_map', help="Name of json file that maps data file headers to ODS keys", default=None)
 # Types of "culling/updating"
@@ -21,6 +21,7 @@ ap.add_argument('--dt_sec', help="Time step in seconds to do elevation check.", 
 ap.add_argument('-c', '--continuity', help="Check and update based on record continuity", action='store_true')
 ap.add_argument('--adjust', help="Adjust start or stop for continuity", choices=['start', 'stop'], default='start')
 ap.add_argument('-t', '--time_cull', help="Cull existing ods file on time - 'now' or isoformat", default=False)
+ap.add_argument('--cull_by', help="Type of time cull", choices=['stale', 'inactive'], default='stale')
 ap.add_argument('-i', '--invalid_cull', help="Cull ods of invalid entries", action='store_true')
 # Output
 ap.add_argument('-w', '--write', help="Write ods to this file name", default=False)
@@ -50,12 +51,12 @@ ap.add_argument('--notes', help="ODS field", default=None)
 
 args = ap.parse_args()
 
-ods = ods_engine.ODS(quiet=args.quiet, version=args.version, alert=args.alert)
+ods = ods_engine.ODS(version=args.version, alert=args.alert, quiet=args.quiet)
 if args.std_show:
-    print(ods.standard)
+    print(ods.ods[ods.working_instance].standard)
 
 if args.ods_file:
-    ods.read_ods(ods_file_name=args.ods_file)
+    ods.read_ods(ods_input=args.ods_file)
     if args.defaults is None:
         args.defaults = 'from_ods'  # If nothing else defined, at least use this
 ods.get_defaults_dict(args.defaults)
@@ -68,7 +69,7 @@ if args.src_end_utc is not None:  # Assume that this one will always be used out
     ods.add_new_record_from_namespace(ns=args, override=args.override)
 
 if args.time_cull:
-    ods.cull_ods_by_time(cull_time=args.time_cull)
+    ods.cull_ods_by_time(cull_time=args.time_cull, cull_by=args.cull_by)
 
 if args.invalid_cull:
     ods.cull_ods_by_invalid()
