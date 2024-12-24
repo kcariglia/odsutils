@@ -381,6 +381,21 @@ class ODS(tools.Base):
     # Methods that modify the existing self.ods
 
     def update_by_elevation(self, el_lim_deg=10.0, dt_sec=120, name=None, show_plot=False):
+        """
+        Check an ODS for sources above an elevation limit.  Will update the times for those above that limit.
+
+        Parameters
+        ----------
+        el_lim_deg : float
+            Elevation limit to use, in degrees.
+        dt_sec : float
+            Time step to use for check, in seconds.
+        name : str, None
+            Name of instance to use
+        show_plot : bool
+            Flag to show a plot.
+
+        """
         name = self.get_instance_name(name)
         updated_ods = []
         for rec in self.ods[name].entries:
@@ -406,6 +421,19 @@ class ODS(tools.Base):
             plt.legend()
 
     def update_by_continuity(self, time_offset_sec=1, adjust='start', name=None):
+        """
+        Check the ODS for time continuity.  Not checked yet.
+
+        Parameters
+        ----------
+        time_offset_set : int/float
+            Spacing between record times.
+        adjust : str
+            Side to adjust start/stop
+        name : str, None
+            Name of instance to use
+
+        """
         name = self.get_instance_name(name)
         self.ods = self.check.continuity(self.ods[name].entries, time_offset_sec=time_offset_sec, adjust=adjust)
         self.ods[name].gen_info()
@@ -425,6 +453,8 @@ class ODS(tools.Base):
         obs_len_sec : str, list or None
             If 'start' is not None, this is the length/observation
             If list, must be len(self.ods)
+        name : str, None
+            Name of instance to use
 
         """
         name = self.get_instance_name(name)
@@ -487,6 +517,11 @@ class ODS(tools.Base):
         """
         Remove entries that fail validity check.
 
+        Parameter
+        ---------
+        name : str, None
+            Name of instance to use
+            
         """
         name = self.get_instance_name(name)
         self.qprint("Culling ODS for invalid records:", end='  ')
