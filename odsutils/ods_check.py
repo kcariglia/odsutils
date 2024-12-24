@@ -9,13 +9,22 @@ class ODSCheck(tools.Base):
     """
     prefixes = {'n': '', 'w': 'WARNING: ', 'e': 'ERROR: '}
 
-    def __init__(self, standard, alert='warn'):
-        self.standard = standard
-        self.alert = alert
+    def __init__(self, alert='warn', standard=None):
+        """
+        Parameter
+        ---------
+        alert : str
+            Default alert
+
+        """
         self.quiet = True if alert == 'none' else False
         self.pre = self.prefixes[alert[0].lower()]
+        self.standard = standard
 
-    def record(self, rec, ctr=None):
+    def update_standard(self, standard):
+        self.standard = standard
+
+    def record(self, rec, ctr=None, standard=None):
         """
         Checks a single ods record for:
             1 - keys are all valid ODS fields
@@ -29,6 +38,8 @@ class ODSCheck(tools.Base):
             An ods record
         ctr : int or None
             If supplied, a counter of which record for printing
+        stanrdard : Standard or None
+            Standard to use
         
         Return
         ----------
@@ -36,26 +47,28 @@ class ODSCheck(tools.Base):
             Is the record a valid ods record
 
         """
+        standard = self.standard if standard is None else standard
+
         ending = '' if ctr is None else f'in record {ctr}'
         is_valid = True
         for key in rec:  # check that all supplied keys are valid and not None
-            if key not in self.standard.ods_fields:
+            if key not in standard.ods_fields:
                 self.qprint(f"{self.pre}{key} not an ods_field {ending}")
                 is_valid = False
             elif rec[key] is None:
                 self.qprint(f"{self.pre}Value for {key} is None {ending}")
                 is_valid = False
-        for key in self.standard.ods_fields:  # Check that all keys are provided for a rec and type is correct
+        for key in standard.ods_fields:  # Check that all keys are provided for a rec and type is correct
             if key not in rec:
                 self.qprint(f"{self.pre}Missing {key} {ending}")
                 is_valid = False
             if rec[key] is not None:
                 try:
-                    _ = self.standard.ods_fields[key](rec[key])
+                    _ = standard.ods_fields[key](rec[key])
                 except ValueError:
                     self.qprint(f"{self.pre}{rec[key]} is wrong type for {key} {ending}")
                     is_valid = False
-        for key in self.standard.time_fields:
+        for key in standard.time_fields:
             try:
                 _ = tools.make_time(rec[key])
             except ValueError:
@@ -73,16 +86,47 @@ class ODSCheck(tools.Base):
             List of valid record entries in the list
         self.number_of_records : int
             Number of records checked.
+        stanrdard : Standard or None
+            Standard to use
 
         """
         valid_records = []
-        for ctr, rec in enumerate(ods):
-            is_valid = self.record(rec, ctr)
+        for ctr, rec in enumerate(ods.entries):
+            is_valid = self.record(rec, ctr, standard=ods.standard)
             if is_valid:
                 valid_records.append(ctr)
         return valid_records
     
-    def observation(self, rec, el_lim_deg=10.0, dt_sec=120.0, show_plot=False):
+    def is_same(self, rec1, rec2, standard=None):
+        """
+        Checks to see if two records are equal.
+
+        """
+        standard = self.standard if standard is None else standard
+        for key in self.standard.ods_fields:
+            try:
+                if str(rec1[key]) != str(rec2[key]):
+                    print("C109: is different")
+                    return False
+            except KeyError:  # Doesn't check across standards.
+                print("C112 is different standard")
+                return False
+        print("C114 is same")
+        return True
+
+    def is_duplicate(self, ods, record, standard=None):
+        """
+        Checks the ods for the record.
+
+        """
+        for entry in ods.entries:
+            if self.is_same(entry, record, standard=standard):
+                print("C124 is duplicate")
+                return True
+        print("C126 is different")
+        return False
+
+    def observation(self, rec, el_lim_deg=10.0, dt_sec=120.0, show_plot=False, standard=None):
         """
         Determine whether an ODS record represents a source above the horizon.
 
@@ -96,6 +140,8 @@ class ODSCheck(tools.Base):
             Time step for ephemerides check.
         show_plot : bool
             Show the plot of ephemerides.
+        stanrdard : Standard or None
+            Standard to use
 
         Return
         ------
@@ -107,8 +153,9 @@ class ODSCheck(tools.Base):
         import astropy.units as u
         from numpy import where
 
-        start = tools.make_time(rec[self.standard.start])
-        stop = tools.make_time(rec[self.standard.stop])
+        standard = self.standard if standard is None else standard
+        start = tools.make_time(rec[standard.start])
+        stop = tools.make_time(rec[standard.stop])
         dt = TimeDelta(dt_sec, format='sec')
         times = []
         this_step = start
@@ -116,23 +163,23 @@ class ODSCheck(tools.Base):
             times.append(this_step)
             this_step += dt
         times = tools.make_time(times)
-        location = EarthLocation(lat = float(rec[self.standard.lat]) * u.deg, lon = float(rec[self.standard.lon]) * u.deg, height = float(rec[self.standard.ele]) * u.m)
+        location = EarthLocation(lat = float(rec[standard.lat]) * u.deg, lon = float(rec[standard.lon]) * u.deg, height = float(rec[standard.ele]) * u.m)
 
         aa = AltAz(location=location, obstime=times)
-        coord = SkyCoord(float(rec[self.standard.ra]) * u.deg, float(rec[self.standard.dec]) * u.deg)
+        coord = SkyCoord(float(rec[standard.ra]) * u.deg, float(rec[standard.dec]) * u.deg)
         obs = coord.transform_to(aa)
         above_horizon = where(obs.alt > el_lim_deg * u.deg)[0]
         if not len(above_horizon):
             return False
         if show_plot:
             import matplotlib.pyplot as plt
-            plt.figure(self.standard.plot_azel)
-            plt.plot(obs.az, obs.alt, label=rec[self.standard.source])
-            plt.figure(self.standard.plot_timeel)
-            plt.plot(times.datetime, obs.alt, label=rec[self.standard.source])
+            plt.figure(standard.plot_azel)
+            plt.plot(obs.az, obs.alt, label=rec[standard.source])
+            plt.figure(standard.plot_timeel)
+            plt.plot(times.datetime, obs.alt, label=rec[standard.source])
         return (times[above_horizon[0]].datetime.isoformat(timespec='seconds'), times[above_horizon[-1]].datetime.isoformat(timespec='seconds'))
     
-    def continuity(self, ods, time_offset_sec=1, adjust='stop'):
+    def continuity(self, ods, time_offset_sec=1, adjust='stop', standard=None):
         """
         Check whether records overlap.
 
@@ -146,26 +193,29 @@ class ODSCheck(tools.Base):
             Time used to offset overlapping entries
         adjust : str
             Adjust 'start' or 'stop'
+        stanrdard : Standard or None
+            Standard to use
 
         Return
         ------
         Adjusted ODS list of records
 
         """
+        standard = self.standard if standard is None else standard
         if adjust not in ['start', 'stop']:
             self.qprint(f'WARNING: Invalid adjust spec - {adjust}')
             return ods
-        adjusted_entries = tools.sort_entries(ods, [self.standard.start, self.standard.stop])
+        adjusted_entries = tools.sort_entries(ods, [standard.start, standard.stop])
         for i in range(len(adjusted_entries) - 1):
-            this_stop = tools.make_time(adjusted_entries[i][self.standard.stop])
-            next_start = tools.make_time(adjusted_entries[i+1][self.standard.start])
+            this_stop = tools.make_time(adjusted_entries[i][standard.stop])
+            next_start = tools.make_time(adjusted_entries[i+1][standard.start])
             if next_start < this_stop:  # Need to adjust
                 if adjust == 'start':
                     next_start = this_stop + TimeDelta(time_offset_sec, format='sec')
                 elif adjust == 'stop':
                     this_stop = next_start - TimeDelta(time_offset_sec, format='sec')
-                adjusted_entries[i].update({self.standard.stop: this_stop.datetime.isoformat()})
-                adjusted_entries[i+1].update({self.standard.start: next_start.datetime.isoformat()})
+                adjusted_entries[i].update({standard.stop: this_stop.datetime.isoformat()})
+                adjusted_entries[i+1].update({standard.start: next_start.datetime.isoformat()})
                 if next_start < this_stop:
                     self.qprint(f"{self.pre}New start is before stop so still need to fix.")
         return adjusted_entries

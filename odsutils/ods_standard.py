@@ -1,3 +1,4 @@
+DEFAULT_WORKING_INSTANCE = 'primary'
 LATEST = 'A'
 
 class Standard_Version_A:
