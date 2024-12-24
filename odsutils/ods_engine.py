@@ -111,35 +111,44 @@ class ODSInstance:
                 data.append(row)
             print(tabulate(data))
     
-    def graph(self, numticks=140, stroff=10):
+    def graph(self, numpoints=160, numticks=10):
         """
         Text-based graph of ods times/targets.
 
         Parameters
         ----------
+        numpoints : int
+            Number of points to use.
         numticks : int
-            Number of ticks to use.
-        stroff : int
-            Size of key buffer
+            Number of interior ticks -- not used yet.
 
         """
         sorted_ods = tools.sort_entries(self.entries, [self.standard.start, self.standard.stop])
         ods_start = tools.make_time(sorted_ods[0][self.standard.start])
         ods_stop = tools.make_time(sorted_ods[-1][self.standard.stop])
-        dt = ((ods_stop - ods_start) / numticks).to('second').value
-        print(f" {ods_start.datetime.isoformat(timespec='seconds')}")
-        print(f"{' ':{stroff}s} |")
-        for rec in self.entries:
-            row = [' '] * numticks
+        dticks = ((ods_stop - ods_start) / (numticks + 2)).to('second').value  # Not used yet.
+
+        dt = ((ods_stop - ods_start) / numpoints).to('second').value
+        rows = []
+        for rec in sorted_ods:
+            rows.append(rec[self.standard.source])
+        stroff = max([len(x) for x in rows]) + 2
+
+        start_label, stop_label = f"{ods_start.datetime.isoformat(timespec='seconds')}", f"{ods_stop.datetime.isoformat(timespec='seconds')}"
+        len_label = len(start_label)
+        labelrow = f" {' ':{stroff - 1 - len_label // 2}s}{start_label}{' '*(numpoints-len_label-1)}{stop_label}"
+        tickrow = f" {' ':{stroff-1}s}|{' '*(numpoints-2)}|"
+        dashrow = '-' * (stroff + numpoints + len_label//2)
+        graphhdr = f"-- GRAPH: {self.name} --\n"
+        print(f"{dashrow}\n{graphhdr}\n{labelrow}\n{tickrow}")
+        for rec in sorted_ods:
+            row = ['.'] * numpoints
             starting = int((tools.make_time(rec[self.standard.start])  -  ods_start).to('second').value / dt)
             ending = int((tools.make_time(rec[self.standard.stop]) - ods_start).to('second').value / dt)
             for star in range(starting, ending):
                 row[star] = '*'
-            print(f"{rec[self.standard.source]:{stroff}s} {''.join(row)}")
-        spaces = ' ' * (numticks + stroff)
-        print(f"{spaces}|")
-        spaces = ' ' * (numticks + stroff - 10)
-        print(f"{spaces}{ods_stop.datetime.isoformat(timespec='seconds')}")
+            print(f"{rec[self.standard.source]:{stroff}s}{''.join(row)}")
+        print(f"{tickrow}\n{labelrow}\n{dashrow}")
 
     def write(self, file_name):
         """
@@ -657,7 +666,7 @@ class ODS(tools.Base):
             return
         self.ods[name].view(order=order, number_per_block=number_per_block)
     
-    def graph_ods(self, numticks=140, stroff=10, name=None):
+    def graph_ods(self, numpoints=160, name=None):
         """
         Text-based graph of ods times/targets.
 
@@ -666,8 +675,7 @@ class ODS(tools.Base):
         if not self.ods[name].number_of_records:
             self.qprint("No records to graph.")
             return
-        self.ods[name].graph(numticks=numticks, stroff=stroff)
-
+        self.ods[name].graph(numpoints=numpoints)
 
     def write_ods(self, file_name, name=None):
         """
