@@ -9,7 +9,7 @@ import glob
 setup_args = {
     'name': "odsutils",
     'description': "ODS Utils",
-    'license': "BSD",
+    'license': "MIT",
     'author': "David DeBoer",
     'author_email': "david.r.deboer@gmail.edu",
     'version': '0.1.1',
