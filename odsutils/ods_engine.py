@@ -712,13 +712,32 @@ class ODS(tools.Base):
         """
         Export the ods to an ods json file.
 
-        Parameter
-        ---------
+        Parameters
+        ----------
         file_name : str
             Name of ods json file to write
+        name : str or None
+            ODS instance
 
         """
         name = self.get_instance_name(name)
         if not self.ods[name].number_of_records:
             self.qprint("WARNING: Writing an empty ODS file!")
         self.ods[name].write(file_name)
+
+    def write_file(self, file_name, name=None, sep=','):
+        """
+        Export teh ods to a data file.
+
+        Parameters
+        ----------
+        file_name : str
+            Name of data file
+        name : str or None
+            ODS instance
+
+        """
+        name = self.get_instance_name(name)
+        if not self.ods[name].number_of_records:
+            self.qprint("WARNING: Writing an empty ODS file!")
+        self.ods[name].export2file(file_name, sep=sep)
