@@ -103,27 +103,22 @@ class ODSCheck(tools.Base):
 
         """
         standard = self.standard if standard is None else standard
-        for key in self.standard.ods_fields:
+        for key in standard.ods_fields:
             try:
                 if str(rec1[key]) != str(rec2[key]):
-                    print("C109: is different")
                     return False
             except KeyError:  # Doesn't check across standards.
-                print("C112 is different standard")
                 return False
-        print("C114 is same")
         return True
 
-    def is_duplicate(self, ods, record, standard=None):
+    def is_duplicate(self, ods, record):
         """
         Checks the ods for the record.
 
         """
         for entry in ods.entries:
-            if self.is_same(entry, record, standard=standard):
-                print("C124 is duplicate")
+            if self.is_same(entry, record, standard=ods.standard):
                 return True
-        print("C126 is different")
         return False
 
     def observation(self, rec, el_lim_deg=10.0, dt_sec=120.0, show_plot=False, standard=None):
