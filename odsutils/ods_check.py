@@ -4,7 +4,7 @@ from astropy.time import TimeDelta
 
 class ODSCheck(tools.Base):
     """
-    Utilities to check ODS records.
+    Utilities to check ODS instances/records.
 
     """
     prefixes = {'n': '', 'w': 'WARNING: ', 'e': 'ERROR: '}
@@ -78,16 +78,17 @@ class ODSCheck(tools.Base):
 
     def ods(self, ods):
         """
-        Checks the ods records are correct and complete.
+        Checks the ods instance records are correct and complete.
 
-        Attributes
-        ----------
-        self.valid_records : list
-            List of valid record entries in the list
-        self.number_of_records : int
-            Number of records checked.
-        stanrdard : Standard or None
-            Standard to use
+        Parameter
+        ---------
+        ods : ODS instance
+            ODS instance to check
+
+        Returns
+        -------
+        valid_records : list
+            List of valid record entries in the ODS instance
 
         """
         valid_records = []
@@ -100,6 +101,19 @@ class ODSCheck(tools.Base):
     def is_same(self, rec1, rec2, standard=None):
         """
         Checks to see if two records are equal.
+
+        Parameters
+        ----------
+        rec1 : dict
+            ODS record
+        rec2 : dict
+            ODS record
+        standard : Standard Class
+            Standard to use
+
+        Return
+        ------
+        bool : True if the entries are the same
 
         """
         standard = self.standard if standard is None else standard
@@ -114,6 +128,17 @@ class ODSCheck(tools.Base):
     def is_duplicate(self, ods, record):
         """
         Checks the ods for the record.
+
+        Parameters
+        ----------
+        ods : ODS Instance
+            ODS Instance to check
+        record : dict
+            Reord to check
+
+        Return
+        ------
+        bool : True if the record is already in ODS Instance
 
         """
         for entry in ods.entries:
@@ -174,7 +199,7 @@ class ODSCheck(tools.Base):
             plt.plot(times.datetime, obs.alt, label=rec[standard.source])
         return (times[above_horizon[0]].datetime.isoformat(timespec='seconds'), times[above_horizon[-1]].datetime.isoformat(timespec='seconds'))
     
-    def continuity(self, ods, time_offset_sec=1, adjust='stop', standard=None):
+    def continuity(self, ods, time_offset_sec=1, adjust='stop'):
         """
         Check whether records overlap.
 
@@ -188,32 +213,53 @@ class ODSCheck(tools.Base):
             Time used to offset overlapping entries
         adjust : str
             Adjust 'start' or 'stop'
-        stanrdard : Standard or None
-            Standard to use
 
         Return
         ------
         Adjusted ODS list of records
 
         """
-        standard = self.standard if standard is None else standard
         if adjust not in ['start', 'stop']:
             self.qprint(f'WARNING: Invalid adjust spec - {adjust}')
             return ods
-        adjusted_entries = tools.sort_entries(ods, [standard.start, standard.stop])
+        adjusted_entries = tools.sort_entries(ods, [ods.standard.start, ods.standard.stop])
         for i in range(len(adjusted_entries) - 1):
-            this_stop = tools.make_time(adjusted_entries[i][standard.stop])
-            next_start = tools.make_time(adjusted_entries[i+1][standard.start])
+            this_stop = tools.make_time(adjusted_entries[i][ods.standard.stop])
+            next_start = tools.make_time(adjusted_entries[i+1][ods.standard.start])
             if next_start < this_stop:  # Need to adjust
                 if adjust == 'start':
                     next_start = this_stop + TimeDelta(time_offset_sec, format='sec')
                 elif adjust == 'stop':
                     this_stop = next_start - TimeDelta(time_offset_sec, format='sec')
-                adjusted_entries[i].update({standard.stop: this_stop.datetime.isoformat()})
-                adjusted_entries[i+1].update({standard.start: next_start.datetime.isoformat()})
+                adjusted_entries[i].update({ods.standard.stop: this_stop.datetime.isoformat()})
+                adjusted_entries[i+1].update({ods.standard.start: next_start.datetime.isoformat()})
                 if next_start < this_stop:
                     self.qprint(f"{self.pre}New start is before stop so still need to fix.")
         return adjusted_entries
 
     def coverage(self, ods, time_step_min=1):
-        print("Step")
+        """
+        Check coverage of records in an ODS instance.
+
+        Parameters
+        ----------
+        ods : list
+            ODS list of records
+        time_step_min : float
+            Time step to check in minutes
+
+        Return
+        ------
+        float : fraction of time covered
+
+        """
+
+        sorted_entries = tools.sort_entries(ods.entries, [ods.standard.start, ods.standard.stop])
+        ods_start, ods_stop = tools.make_time(sorted_entries[0][ods.standard.start]), tools.make_time(sorted_entries[-1][ods.standard.stop])
+        print(f"Checking coverage from {ods_start} - {ods_stop}")
+        dt = TimeDelta(time_step_min * 60.0, format='sec')
+        this_time = ods_start - dt
+        while this_time < ods_stop:
+            this_time += dt
+            for entry in sorted_entries:
+                print("CHECK")

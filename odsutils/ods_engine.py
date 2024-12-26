@@ -2,6 +2,7 @@ from copy import copy
 from . import ods_standard
 from .ods_check import ODSCheck
 from . import ods_tools as tools
+from numpy import floor
 
 
 class ODSInstance:
@@ -26,6 +27,7 @@ class ODSInstance:
         self.valid_records = []
         self.number_of_records = 0
         self.input_sets = {'invalid': set()}
+        self.time_format = 'string'
 
     def read(self, ods_input):
         """
@@ -62,6 +64,7 @@ class ODSInstance:
             return False
         self.entries += input_ods_data[self.standard.data_key]  # This is the internal list of ods records
         self.gen_info()
+        self.time_format = 'string'
         return True
 
     def gen_info(self):
@@ -85,6 +88,30 @@ class ODSInstance:
                 else:
                     self.input_sets['invalid'].add(key)
 
+    def make_time(self):
+        """
+        Make Time attributes for time fields -- it modifies the instance.
+
+        """
+        if self.time_format == 'time':  # Already is
+            return
+        self.time_format = 'time'
+        for entry in self.entries:
+            for key in self.standard.time_fields:
+                entry[key] = tools.make_time(entry[key])
+
+    def convert_time_to_str(self):
+        """
+        This is the inverse of make_time -- it modifies the instance.
+
+        """
+        if self.time_format == 'string':  # Already is
+            return
+        self.time_format = 'string'
+        for entry in self.entries:
+            for key in self.standard.time_fields:
+                entry[key] = tools.time2str(entry[key])
+
     def view(self, order=['src_id', 'src_start_utc', 'src_end_utc'], number_per_block=5):
         """
         View the ods instance as a table arranged in blocks.
@@ -101,6 +128,7 @@ class ODSInstance:
             return
         from tabulate import tabulate
         from numpy import ceil
+        self.convert_time_to_str()
         blocks = [range(i * number_per_block, (i+1) * number_per_block) for i in range(int(ceil(self.number_of_records / number_per_block)))]
         blocks[-1] = range(blocks[-1].start, self.number_of_records)
         order = order + [x for x in self.standard.ods_fields if x not in order]
@@ -123,9 +151,10 @@ class ODSInstance:
             Number of interior ticks -- not used yet.
 
         """
+        self.make_time()
         sorted_ods = tools.sort_entries(self.entries, [self.standard.start, self.standard.stop], collapse=False, reverse=False)
-        ods_start = tools.make_time(sorted_ods[0][self.standard.start])
-        ods_stop = tools.make_time(sorted_ods[-1][self.standard.stop])
+        ods_start = sorted_ods[0][self.standard.start]
+        ods_stop = sorted_ods[-1][self.standard.stop]
         dticks = ((ods_stop - ods_start) / (numticks + 2)).to('second').value  # Not used yet.
 
         dt = ((ods_stop - ods_start) / numpoints).to('second').value
@@ -149,8 +178,8 @@ class ODSInstance:
         print(f"{dashrow}\n{graphhdr}\n{labelrow}\n{tickrow}")
         for rec in sorted_ods:
             row = ['.'] * numpoints
-            starting = int((tools.make_time(rec[self.standard.start])  -  ods_start).to('second').value / dt)
-            ending = int((tools.make_time(rec[self.standard.stop]) - ods_start).to('second').value / dt) + 1
+            starting = int(floor((rec[self.standard.start]  -  ods_start).to('second').value / dt))
+            ending = int(floor((rec[self.standard.stop] - ods_start).to('second').value / dt)) + 1
             for star in range(starting, ending):
                 try:
                     row[star] = '*'
@@ -171,9 +200,11 @@ class ODSInstance:
             Name of ods json file to write
 
         """
+        self.convert_time_to_str()
         tools.write_json_file(file_name, {self.standard.data_key: self.entries})
 
     def export2file(self, filename, sep=','):
+        self.convert_time_to_str()
         tools.write_data_file(filename, self.entries, self.standard.ods_fields, sep=sep)
 
 
@@ -519,14 +550,15 @@ class ODS(tools.Base):
         name = self.get_instance_name(name)
         cull_time = tools.make_time(cull_time)
         self.qprint(f"Culling ODS for {cull_time} by {cull_by}:", end='  ')
+        self.ods[name].make_time()
         culled_ods = []
         for rec in self.ods[name].entries:
-            stop_time = tools.make_time(rec[self.ods[name].standard.stop])
+            stop_time = rec[self.ods[name].standard.stop]
             add_it = True
             if cull_time > stop_time:
                 add_it = False
             elif cull_by == 'inactive':
-                start_time = tools.make_time(rec[self.ods[name].standard.start])
+                start_time = rec[self.ods[name].standard.start]
                 if cull_time < start_time:
                     add_it = False
             if add_it:
@@ -567,6 +599,7 @@ class ODS(tools.Base):
 
         """
         name = self.get_instance_name(name)
+        self.ods[name].convert_time_to_str()
         self.qprint("Culling ODS for duplicates:  ", end='  ')
         starting_number = copy(self.ods[name].number_of_records)
         self.ods[name].entries = tools.sort_entries(self.ods[name].entries, self.ods[name].standard.sort_order_time, collapse=True, reverse=False)

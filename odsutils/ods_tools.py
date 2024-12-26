@@ -1,4 +1,5 @@
 import json
+from astropy.time import Time
 
 
 def read_json_file(filename):
@@ -87,7 +88,6 @@ def make_time(t):
     astropy.time.Time
 
     """
-    from astropy.time import Time
     if t == 'now':
         return Time.now()
     try:
@@ -95,6 +95,18 @@ def make_time(t):
     except ValueError:
         print("NEED TO DO SOME CHECKING, E.G. timezone aware etc")
         raise ValueError(f"Error in make time {t}")
+
+def time2str(t):
+    """
+    Parameter
+    ---------
+    t : Time
+        time to convert
+
+    """
+    if isinstance(t, str):
+        return t
+    return t.datetime.isoformat(timespec='seconds')
 
 
 def sort_entries(ods, terms, collapse=False, reverse=False):
