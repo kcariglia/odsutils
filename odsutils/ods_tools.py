@@ -85,10 +85,10 @@ def make_time(t):
         raise ValueError(f"Error in make time {t}")
 
 
-def sort_entries(ods, terms):
+def sort_entries(ods, terms, collapse=False, reverse=False):
     """
     Sort the ods records with the supplied list of terms (keys in the record) -- the position number is last
-    to make sure there is a unique key.
+    to make sure there is a unique key unless collapse is True
 
     Parameters
     ----------
@@ -96,6 +96,10 @@ def sort_entries(ods, terms):
         A list of dictionaries with the records.
     terms : list
         The list of dictionary keys upon which to sort.
+    collapse : bool
+        Flag to leave off unique position number term
+    reverse : bool
+        Flag to reverse sort
 
     Return
     ------
@@ -109,11 +113,12 @@ def sort_entries(ods, terms):
         sort_key = []
         for key in terms:
             sort_key.append(rec[key])
-        sort_key.append(i)
+        if not collapse:
+            sort_key.append(i)
         sort_key = tuple(sort_key)
         entries[sort_key] = i
     adjusted_entries = []
-    for key in sorted(entries.keys()):
+    for key in sorted(entries.keys(), reverse=reverse):
         adjusted_entries.append(copy(ods[entries[key]]))
     return adjusted_entries
 

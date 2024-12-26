@@ -113,7 +113,7 @@ class ODSInstance:
     
     def graph(self, numpoints=160, numticks=10):
         """
-        Text-based graph of ods times/targets.
+        Text-based graph of ods times/targets sorted by start/stop times.
 
         Parameters
         ----------
@@ -123,7 +123,7 @@ class ODSInstance:
             Number of interior ticks -- not used yet.
 
         """
-        sorted_ods = tools.sort_entries(self.entries, [self.standard.start, self.standard.stop])
+        sorted_ods = tools.sort_entries(self.entries, [self.standard.start, self.standard.stop], collapse=False, reverse=False)
         ods_start = tools.make_time(sorted_ods[0][self.standard.start])
         ods_stop = tools.make_time(sorted_ods[-1][self.standard.stop])
         dticks = ((ods_stop - ods_start) / (numticks + 2)).to('second').value  # Not used yet.
@@ -546,6 +546,15 @@ class ODS(tools.Base):
         self.ods[name].gen_info()
         self.ods[name].valid_records = self.check.ods(self.ods[name])
         self.qprint(f"retaining {self.ods[name].number_of_records} of {starting_number}")
+    
+    def cull_by_duplicate(self, name=None):
+        """
+        Remove duplicate entries, sorts it by the standard.sort_order_time
+
+        """
+        name = self.get_instance_name(name)
+        self.ods[name].entries = tools.sort_entries(self.ods[name].entries, self.standard.sort_order_time, collapse=True, reverse=False)
+
 
     ##############################################ADD############################################
     # Methods that add to the existing self.ods
