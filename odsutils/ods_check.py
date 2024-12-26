@@ -214,3 +214,6 @@ class ODSCheck(tools.Base):
                 if next_start < this_stop:
                     self.qprint(f"{self.pre}New start is before stop so still need to fix.")
         return adjusted_entries
+
+    def coverage(self, ods, time_step_min=1):
+        print("Step")
