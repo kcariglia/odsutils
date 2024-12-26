@@ -33,7 +33,19 @@ def read_data_file(file_name, sep='\s+', replace_char=None, header_map=None):
     return data
 
 
-def write_data_file(file_name, ods, cols, sep=' '):
+def write_data_file(file_name, ods, cols, sep=','):
+    """
+    Parameters
+    file_name : str
+        Name of output file
+    ods : list of dict
+        List if dictionaries comprising ODS entries
+    cols : list or dict
+        Columns to output
+    sep : str
+        Separator to use
+
+    """
     with open(file_name, 'w') as fp:
         print(sep.join(cols), file=fp)
         for rec in ods:

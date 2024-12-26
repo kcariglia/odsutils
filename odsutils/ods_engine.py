@@ -173,6 +173,10 @@ class ODSInstance:
         """
         tools.write_json_file(file_name, {self.standard.data_key: self.entries})
 
+    def export2file(self, filename, sep=','):
+        tools.write_data_file(filename, self.entries, self.standard.ods_fields, sep=sep)
+
+
 class ODS(tools.Base):
     """
     Utilities to handle ODS instances.
@@ -394,7 +398,7 @@ class ODS(tools.Base):
         for entry in self.ods['from_web'].entries:
             if not self.check.is_duplicate(self.ods['from_log'], entry):
                 self.add_from_list([entry], name='from_log')
-        tools.write_data_file(logfile, self.ods['from_log'].entries, self.ods['from_log'].standard.ods_fields, sep=',')
+        self.ods['from_log'].export2file(logfile, sep=',')
 
     ##############################################MODIFY#########################################
     # Methods that modify the existing self.ods
