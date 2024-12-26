@@ -136,13 +136,12 @@ class ODSInstance:
 
         start_label, stop_label = f"{ods_start.datetime.isoformat(timespec='seconds')}", f"{ods_stop.datetime.isoformat(timespec='seconds')}"
         current = int((tools.make_time('now') - ods_start).to('second').value / dt)
-        use_current = True if (current > -1 and current < numpoints) else False
+        show_current = True if (current > -1 and current < numpoints) else False
         len_label = len(start_label)
         stroff = max(stroff, len_label // 2 + 1)
         labelrow = f"{' ':{stroff - 1 - len_label // 2}s}{start_label}{' '*(numpoints-len_label-1)}{stop_label}"
-        #tickrow = f" {' ':{stroff-1}s}|{' '*(numpoints-2)}|"
         tickrow = [' '] * (stroff) + ['|'] + [' '] * (numpoints-2) + ['|']
-        if use_current:
+        if show_current:
             tickrow[current + stroff] = '0'
         tickrow = ''.join(tickrow)
         dashrow = '-' * (stroff + numpoints + len_label//2)
@@ -157,7 +156,7 @@ class ODSInstance:
                     row[star] = '*'
                 except IndexError:
                     pass
-            if use_current:
+            if show_current:
                 row[current] = 'X' if row[current] == '*' else '|'
             print(f"{rec[self.standard.source]:{stroff}s}{''.join(row)}")
         print(f"{tickrow}\n{labelrow}\n{dashrow}")
@@ -390,13 +389,12 @@ class ODS(tools.Base):
 
         self.ods_instance('from_log')
         self.add_from_file(logfile, name='from_log', sep=',')
+        self.cull_by_duplicate(name='from_log')
 
         for entry in self.ods['from_web'].entries:
             if not self.check.is_duplicate(self.ods['from_log'], entry):
                 self.add_from_list([entry], name='from_log')
-
         tools.write_data_file(logfile, self.ods['from_log'].entries, self.ods['from_log'].standard.ods_fields, sep=',')
-
 
     ##############################################MODIFY#########################################
     # Methods that modify the existing self.ods

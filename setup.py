@@ -12,7 +12,7 @@ setup_args = {
     'license': "BSD",
     'author': "David DeBoer",
     'author_email': "david.r.deboer@gmail.edu",
-    'version': '0.1.0',
+    'version': '0.1.1',
     'scripts': glob.glob('scripts/*'),
     'packages': ['odsutils']
 }
