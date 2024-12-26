@@ -132,21 +132,33 @@ class ODSInstance:
         rows = []
         for rec in sorted_ods:
             rows.append(rec[self.standard.source])
-        stroff = max([len(x) for x in rows]) + 2
+        stroff = max([len(x) for x in rows]) + 1
 
         start_label, stop_label = f"{ods_start.datetime.isoformat(timespec='seconds')}", f"{ods_stop.datetime.isoformat(timespec='seconds')}"
+        current = int((tools.make_time('now') - ods_start).to('second').value / dt)
+        use_current = True if (current > -1 and current < numpoints) else False
         len_label = len(start_label)
-        labelrow = f" {' ':{stroff - 1 - len_label // 2}s}{start_label}{' '*(numpoints-len_label-1)}{stop_label}"
-        tickrow = f" {' ':{stroff-1}s}|{' '*(numpoints-2)}|"
+        stroff = max(stroff, len_label // 2 + 1)
+        labelrow = f"{' ':{stroff - 1 - len_label // 2}s}{start_label}{' '*(numpoints-len_label-1)}{stop_label}"
+        #tickrow = f" {' ':{stroff-1}s}|{' '*(numpoints-2)}|"
+        tickrow = [' '] * (stroff) + ['|'] + [' '] * (numpoints-2) + ['|']
+        if use_current:
+            tickrow[current + stroff] = '0'
+        tickrow = ''.join(tickrow)
         dashrow = '-' * (stroff + numpoints + len_label//2)
         graphhdr = f"-- GRAPH: {self.name} --\n"
         print(f"{dashrow}\n{graphhdr}\n{labelrow}\n{tickrow}")
         for rec in sorted_ods:
             row = ['.'] * numpoints
             starting = int((tools.make_time(rec[self.standard.start])  -  ods_start).to('second').value / dt)
-            ending = int((tools.make_time(rec[self.standard.stop]) - ods_start).to('second').value / dt)
+            ending = int((tools.make_time(rec[self.standard.stop]) - ods_start).to('second').value / dt) + 1
             for star in range(starting, ending):
-                row[star] = '*'
+                try:
+                    row[star] = '*'
+                except IndexError:
+                    pass
+            if use_current:
+                row[current] = 'X' if row[current] == '*' else '|'
             print(f"{rec[self.standard.source]:{stroff}s}{''.join(row)}")
         print(f"{tickrow}\n{labelrow}\n{dashrow}")
 
@@ -533,12 +545,12 @@ class ODS(tools.Base):
 
         """
         name = self.get_instance_name(name)
-        self.qprint("Culling ODS for invalid records:", end='  ')
+        self.qprint("Culling ODS for invalid records:  ", end='  ')
         valid_records = self.check.ods(self.ods[name])
         if len(valid_records) == self.ods[name].number_of_records:
             self.qprint("retaining all.")
             return
-        starting_number = self.ods[name].number_of_records
+        starting_number = copy(self.ods[name].number_of_records)
         culled_ods = []
         for irec in valid_records:
             culled_ods.append(copy(self.ods[name].entries[irec]))
@@ -553,7 +565,15 @@ class ODS(tools.Base):
 
         """
         name = self.get_instance_name(name)
-        self.ods[name].entries = tools.sort_entries(self.ods[name].entries, self.standard.sort_order_time, collapse=True, reverse=False)
+        self.qprint("Culling ODS for duplicates:  ", end='  ')
+        starting_number = copy(self.ods[name].number_of_records)
+        self.ods[name].entries = tools.sort_entries(self.ods[name].entries, self.ods[name].standard.sort_order_time, collapse=True, reverse=False)
+        if len(self.ods[name].entries) == starting_number:
+            self.qprint("retaining all.")
+            return
+        self.ods[name].gen_info()
+        self.ods[name].valid_records = self.check.ods(self.ods[name])
+        self.qprint(f"retaining {self.ods[name].number_of_records} of {starting_number}")
 
 
     ##############################################ADD############################################
