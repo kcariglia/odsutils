@@ -19,11 +19,16 @@ class ODSCheck:
             Default alert
 
         """
+        # All this seems to be needed.
         level = getattr(logging, alert.upper())
         logger.setLevel(level)
         ch = logging.StreamHandler()
         ch.setLevel(level)
         logger.addHandler(ch)
+        formatter = logging.Formatter('%(name)s - %(levelname)s - %(message)s')
+        ch.setFormatter(formatter)
+        logger.addHandler(ch)
+        #
         self.standard = standard
 
     def update_standard(self, standard):
@@ -193,4 +198,5 @@ class ODSCheck:
         while this_time < ods_stop:
             this_time += dt
             for entry in sorted_entries:
-                print("CHECK")
+                #print("CHECK")
+                continue

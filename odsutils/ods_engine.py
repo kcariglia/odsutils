@@ -248,6 +248,9 @@ class ODS:
         ch = logging.StreamHandler()
         ch.setLevel(level)
         logger.addHandler(ch)
+        formatter = logging.Formatter('%(levelname)s - %(message)s')
+        ch.setFormatter(formatter)
+        logger.addHandler(ch)
         self.version = version
         self.working_instance = working_instance
         self.reset_ods_instances('all', version=version)
