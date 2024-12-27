@@ -5,7 +5,7 @@ try:
     import warnings
     from erfa import ErfaWarning
     with warnings.catch_warnings():
-        warnings.filterwarnings("ignore")
+        warnings.filterwarnings("ignore", category=ErfaWarning)
 except ImportError:
     pass
 

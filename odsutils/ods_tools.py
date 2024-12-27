@@ -1,6 +1,13 @@
 import json
 from astropy.time import Time
 
+try:
+    import warnings
+    from erfa import ErfaWarning
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", category=ErfaWarning)
+except ImportError:
+    pass
 
 def read_json_file(file_name):
     """
