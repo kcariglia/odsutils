@@ -8,7 +8,7 @@ from numpy import floor
 class ODSInstance:
     """Very light class containing the data, some core classes and metadata -- most handling is done within ODS."""
 
-    def __init__(self, name, version='latest', input_from='init'):
+    def __init__(self, name, version='latest'):
         """
         Parameters
         ----------
@@ -16,15 +16,14 @@ class ODSInstance:
             Name of instance -- the key used in ODS
         version : str
             Standard version to use.
-        input_from : str
-            WHere the instance came from (filename, etc)
 
         """
         self.name = name
         self.standard = ods_standard.Standard(version=version)
-        self.input = input_from
+        self.input = 'init'
         self.entries = []
         self.valid_records = []
+        self.invalid_records = {}
         self.number_of_records = 0
         self.input_sets = {'invalid': set()}
         self.time_format = 'string'
@@ -73,6 +72,10 @@ class ODSInstance:
 
         Attributes
         ----------
+        valid_records : list
+            List of valid record entry numbers
+        invalid_record : dict
+            Dict of invalid records, keyed on entry number
         input_sets : set
             List of input sets and invalid keys -- set in gen_info
         number_of_records : int
@@ -80,13 +83,20 @@ class ODSInstance:
 
         """
         self.number_of_records = len(self.entries)
-        for entry in self.entries:
+        self.invalid_records = {}
+        self.valid_records = []
+        for ctr, entry in enumerate(self.entries):
             for key, val in entry.items():
                 if key in self.standard.ods_fields:
                     self.input_sets.setdefault(key, set())
                     self.input_sets[key].add(val)
                 else:
                     self.input_sets['invalid'].add(key)
+            is_valid, msg = self.standard.valid(entry)
+            if is_valid:
+                self.valid_records.append(ctr)
+            else:
+                self.invalid_records[ctr] = msg
 
     def make_time(self):
         """
@@ -279,8 +289,7 @@ class ODS(tools.Base):
             return
         self.ods[name] = ODSInstance(
             name = name,
-            version = version,
-            input_from = 'init',
+            version = version
         )
         if set_as_working:
             self.update_working_instance(name)
@@ -327,18 +336,21 @@ class ODS(tools.Base):
         Parameters
         ----------
         ods_input : str
-            ODS input, either filename of dictionary.
+            ODS input, either filename or dictionary.
         name : str, None
             Name of instance to use
 
         """
         name = self.get_instance_name(name)
         self.ods[name].read(ods_input)
-        self.ods[name].valid_records = self.check.ods(self.ods[name])
         self.qprint(f"Read {self.ods[name].number_of_records} records from {self.ods[name].input}")
-        number_of_invalid_records = self.ods[name].number_of_records - len(self.ods[name].valid_records)
-        if number_of_invalid_records:
-            print(f"{number_of_invalid_records} / {self.ods[name].number_of_records} were not valid.")
+        self.instance_report(name=name)
+
+    def instance_report(self, name=None):
+        name = self.get_instance_name(name)
+        print(f"{len(self.ods[name].invalid_records)} / {self.ods[name].number_of_records} were not valid.")
+        for ctr, msg in self.ods[name].invalid_records.items():
+            print(f"Entry {ctr}:  {', '.join(msg)}")
 
     def get_defaults_dict(self, defaults='from_ods'):
         """
@@ -460,7 +472,6 @@ class ODS(tools.Base):
                 updated_ods.append(valid_rec)
         self.ods[name].entries = updated_ods
         self.ods[name].gen_info()
-        self.ods[name].valid_records = self.check.ods(self.ods[name])
         if show_plot:
             import matplotlib.pyplot as plt
             plt.figure(ods_standard.PLOT_AZEL)
@@ -489,9 +500,8 @@ class ODS(tools.Base):
 
         """
         name = self.get_instance_name(name)
-        self.ods = self.check.continuity(self.ods[name].entries, time_offset_sec=time_offset_sec, adjust=adjust)
+        self.ods = self.check.continuity(self.ods[name], time_offset_sec=time_offset_sec, adjust=adjust)
         self.ods[name].gen_info()
-        self.ods[name].valid_records = self.check.ods(self.ods[name])
 
     def update_ods_times(self, times=None, start=None, obs_len_sec=None, name=None):
         """
@@ -531,7 +541,7 @@ class ODS(tools.Base):
                            self.ods[name].standard.stop: tt[1].datetime.isoformat(timespec='seconds')}
             self.ods[name].entries[i].update(this_update)
 
-    def cull_ods_by_time(self, cull_time='now', cull_by='stale', name=None):
+    def cull_by_time(self, cull_time='now', cull_by='stale', name=None):
         """
         Remove entries with end times before cull_time.  Overwrites self.ods[name]
 
@@ -566,9 +576,8 @@ class ODS(tools.Base):
         self.ods[name].entries = copy(culled_ods)
         self.qprint(f"retaining {len(self.ods[name].entries)} of {self.ods[name].number_of_records}")
         self.ods[name].gen_info()
-        self.ods[name].valid_records = self.check.ods(self.ods[name])
 
-    def cull_ods_by_invalid(self,  name=None):
+    def cull_by_invalid(self,  name=None):
         """
         Remove entries that fail validity check.
 
@@ -579,18 +588,17 @@ class ODS(tools.Base):
 
         """
         name = self.get_instance_name(name)
+        self.ods[name].gen_info()
         self.qprint("Culling ODS for invalid records:  ", end='  ')
-        valid_records = self.check.ods(self.ods[name])
-        if len(valid_records) == self.ods[name].number_of_records:
+        if not len(self.ods[name].valid_records):
             self.qprint("retaining all.")
             return
         starting_number = copy(self.ods[name].number_of_records)
         culled_ods = []
-        for irec in valid_records:
+        for irec in self.ods[name].valid_records:
             culled_ods.append(copy(self.ods[name].entries[irec]))
         self.ods[name].entries = culled_ods
         self.ods[name].gen_info()
-        self.ods[name].valid_records = self.check.ods(self.ods[name])
         self.qprint(f"retaining {self.ods[name].number_of_records} of {starting_number}")
     
     def cull_by_duplicate(self, name=None):
@@ -607,14 +615,13 @@ class ODS(tools.Base):
             self.qprint("retaining all.")
             return
         self.ods[name].gen_info()
-        self.ods[name].valid_records = self.check.ods(self.ods[name])
         self.qprint(f"retaining {self.ods[name].number_of_records} of {starting_number}")
 
 
     ##############################################ADD############################################
     # Methods that add to the existing self.ods
 
-    def add_new_record(self, override=False, name=None, **kwargs):
+    def add_new_record(self, name=None, **kwargs):
         """
         Append a new record to self.ods, using defaults then kwargs.
         
@@ -624,14 +631,10 @@ class ODS(tools.Base):
         name = self.get_instance_name(name)
         new_rec = self.init_new_record(name=name)
         new_rec.update(kwargs)
-        is_valid = self.check.record(new_rec, standard=self.ods[name].standard)
-        if is_valid or override:
-            self.ods[name].entries.append(new_rec)
-        else:
-            self.qprint("WARNING: Record not valid -- not adding!")
+        self.ods[name].entries.append(new_rec)
         self.ods[name].gen_info()
 
-    def add_new_record_from_namespace(self, ns, override=False, name=None):
+    def add_new_record_from_namespace(self, ns, name=None):
         """
         Appends a new ods record to self.ods supplied as a Namespace
         
@@ -643,13 +646,14 @@ class ODS(tools.Base):
         for key, val in vars(ns).items():
             if key in self.ods[name].standard.ods_fields:
                 kwargs[key] = val
-        self.add_new_record(override=override, name=name, **kwargs)
+        self.add_new_record(name=name, **kwargs)
+        self.instance_report(name=name)
 
-    def merge(self, from_ods, to_ods=ods_standard.DEFAULT_WORKING_INSTANCE, override=True):
+    def merge(self, from_ods, to_ods=ods_standard.DEFAULT_WORKING_INSTANCE):
         print(f"Updating {to_ods} from {from_ods}")
-        self.add_from_list(self.ods[from_ods].entries, name=to_ods, override=override)
+        self.add_from_list(self.ods[from_ods].entries, name=to_ods)
 
-    def add_from_list(self, entries, override=False, name=None):
+    def add_from_list(self, entries, name=None):
         """
         Append a records to self.ods, using defaults then entries.
         
@@ -665,9 +669,10 @@ class ODS(tools.Base):
         """
         name = self.get_instance_name(name)
         for entry in entries:
-            self.add_new_record(override=override, name=name, **entry)
+            self.add_new_record(name=name, **entry)
         self.qprint(f"Read {len(entries)} records from list.")
-        self.valid_records = self.check.ods(self.ods[name])
+        self.ods[name].gen_info()
+        self.instance_report(name=name)
 
     def add_from_file(self, data_file_name, override=False, name=None, sep='auto', replace_char=None, header_map=None):
         """
@@ -705,9 +710,10 @@ class ODS(tools.Base):
         self.data_file_name = data_file_name
         obs_list = tools.read_data_file(self.data_file_name, sep=sep, replace_char=replace_char, header_map=header_map)
         for _, row in obs_list.iterrows():
-            self.add_new_record(override=override, name=name, **row.to_dict())
+            self.add_new_record(name=name, **row.to_dict())
         self.qprint(f"Read {len(obs_list.index)} records from {self.data_file_name}.")
-        self.valid_records = self.check.ods(self.ods[name])
+        self.ods[name].gen_info()
+        self.instance_report(name=name)
 
     ######################################OUTPUT##################################
     # Methods that show/save ods instance
