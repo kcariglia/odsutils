@@ -173,7 +173,7 @@ class ODSCheck:
                     logger.warning(f"{self.pre}New start is before stop so still need to fix.")
         return adjusted_entries
 
-    def coverage(self, ods, time_step_min=1):
+    def coverage(self, ods, starting, stopping, time_step_min=1):
         """
         Check coverage of records in an ODS instance.
 
@@ -189,14 +189,30 @@ class ODSCheck:
         float : fraction of time covered
 
         """
+        from copy import copy
 
-        sorted_entries = tools.sort_entries(ods.entries, [ods.standard.start, ods.standard.stop])
-        ods_start, ods_stop = tools.make_time(sorted_entries[0][ods.standard.start]), tools.make_time(sorted_entries[-1][ods.standard.stop])
-        logger.info(f"Checking coverage from {ods_start} - {ods_stop}")
+        ods.make_time()
+        sorted_entries = tools.sort_entries(ods.entries, [ods.standard.stop, ods.standard.start])
         dt = TimeDelta(time_step_min * 60.0, format='sec')
-        this_time = ods_start - dt
-        while this_time < ods_stop:
+        starting = ods.earliest if starting == 'start' else tools.make_time(starting)
+        stopping = ods.latest if stopping == 'stop' else tools.make_time(stopping)
+        logger.info(f"Checking coverage from {starting} - {stopping}")
+        this_time = copy(starting)
+        ts = []
+        covered = []
+        starting_index = 0
+        while this_time < stopping:
+            ts.append(this_time.datetime)
+            if this_time < ods.earliest or this_time > ods.latest:
+                covered.append(0)
+            else:
+                for entry in sorted_entries[starting_index:]:
+                    if this_time > entry[ods.standard.stop]:
+                        starting_index += 1
+                    if entry[ods.standard.start] <= this_time <= entry[ods.standard.stop]:
+                        covered.append(1)
+                        break
+                else:
+                    covered.append(0)
             this_time += dt
-            for entry in sorted_entries:
-                #print("CHECK")
-                continue
+        return ts, covered

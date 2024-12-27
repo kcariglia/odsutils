@@ -83,8 +83,15 @@ class ODSInstance:
             List of input sets and invalid keys -- set in gen_info
         number_of_records : int
             Number of records (entries) -- set in gen_info
+        earliest : Time
+            Time of earliest record
+        latest : Time
+            Time of latest record
 
         """
+        self.make_time()
+        self.earliest = tools.make_time(ods_standard.REF_LATEST_TIME)
+        self.latest = tools.make_time(ods_standard.REF_EARLIEST_TIME)
         self.number_of_records = len(self.entries)
         self.invalid_records = {}
         self.valid_records = []
@@ -93,6 +100,10 @@ class ODSInstance:
                 if key in self.standard.ods_fields:
                     self.input_sets.setdefault(key, set())
                     self.input_sets[key].add(val)
+                    if key == self.standard.start and entry[key] < self.earliest:
+                        self.earliest = copy(entry[key])
+                    elif key == self.standard.stop and entry[key] > self.latest:
+                        self.latest = copy(entry[key])
                 else:
                     self.input_sets['invalid'].add(key)
             is_valid, msg = self.standard.valid(entry)
@@ -243,6 +254,7 @@ class ODS:
             One of the logging levels 'DEBUG', 'INFO', 'WARNING', 'ERROR'
 
         """
+        # All this seems to be needed.
         level = getattr(logging, output.upper())
         logger.setLevel(level)
         ch = logging.StreamHandler()
@@ -251,6 +263,7 @@ class ODS:
         formatter = logging.Formatter('%(levelname)s - %(message)s')
         ch.setFormatter(formatter)
         logger.addHandler(ch)
+        #
         self.version = version
         self.working_instance = working_instance
         self.reset_ods_instances('all', version=version)
@@ -762,6 +775,17 @@ class ODS:
             logger.info("No records to graph.")
             return
         self.ods[name].graph(numpoints=numpoints)
+
+    def plot_ods_coverage(self, name=None, starting='start', stopping='stop', time_step_min=1.0):
+        from numpy import array
+        import matplotlib.pyplot as plt
+
+        name = self.get_instance_name(name)
+        t, c = self.check.coverage(self.ods[name], starting=starting, stopping=stopping, time_step_min=time_step_min)
+        c = array(c)
+        print(f"{100 * c.sum() / len(c): .1f}% of the period is covered.")
+        plt.plot(t, c)
+        plt.show()
 
     def write_ods(self, file_name, name=None):
         """
