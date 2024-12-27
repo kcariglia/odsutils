@@ -136,7 +136,7 @@ def sort_entries(ods, terms, collapse=False, reverse=False):
     for i, rec in enumerate(ods):
         sort_key = []
         for key in terms:
-            sort_key.append(rec[key])
+            sort_key.append(str(rec[key]))
         if not collapse:
             sort_key.append(i)
         sort_key = tuple(sort_key)
