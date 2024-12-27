@@ -3,7 +3,10 @@ from . import ods_standard
 from .ods_check import ODSCheck
 from . import ods_tools as tools
 from numpy import floor
+import logging
 
+
+logger = logging.getLogger(__name__)
 
 class ODSInstance:
     """Very light class containing the data, some core classes and metadata -- most handling is done within ODS."""
