@@ -16,9 +16,9 @@ def read_json_file(file_name):
     dict : file contents
 
     """
-    if not filename.endswith('.json'):
-        filename = filename + '.json'
-    with open(filename, 'r') as fp:
+    if not file_name.endswith('.json'):
+        file_name = file_name + '.json'
+    with open(file_name, 'r') as fp:
         input_file = json.load(fp)
     return input_file
 
