@@ -276,8 +276,6 @@ class ODS:
         ----------
         version : str
             Version of default ODS standard -- note that instances can be different
-        alert : str
-            Action for ODS checking ['none', 'warn', 'error']
         working_instance : str
             Key to use for the ods instance in use.
         output : str
@@ -293,7 +291,7 @@ class ODS:
         formatter = logging.Formatter('%(levelname)s - %(message)s')
         ch.setFormatter(formatter)
         logger.addHandler(ch)
-        #
+        # ###
         self.version = version
         self.working_instance = working_instance
         self.reset_ods_instances('all', version=version)
