@@ -2,9 +2,9 @@ from copy import copy
 from . import ods_standard
 from .ods_check import ODSCheck
 from . import ods_tools as tools
+from . import __version__
 from numpy import floor
 import logging
-
 
 logger = logging.getLogger(__name__)
 
@@ -299,6 +299,8 @@ class ODS:
         self.reset_ods_instances('all', version=version)
         self.defaults = {}
         self.check = ODSCheck(alert=output, standard=self.ods[working_instance].standard)
+
+        logger.info(f"{__name__} ver. {__version__}")
 
     def reset_ods_instances(self, instances='all', version='latest'):
         """
