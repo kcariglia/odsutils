@@ -414,7 +414,7 @@ class ODS:
             else:
                 logger.error(f"Not valid default case: {defaults}")
 
-        logger.info(f"Default values from {defaults}")
+        logger.info(f"Default values from {defaults}:")
         for key, val in self.defaults.items():
             logger.info(f"\t{key:26s}  {val}")
 
@@ -442,7 +442,7 @@ class ODS:
         rec.update(self.defaults)
         return rec
 
-    def online_ods_monitor(self, url="https://www.seti.org/sites/default/files/HCRO/ods.json", logfile='online_ods_mon.txt', check4duplicates=False):
+    def online_ods_monitor(self, url="https://www.seti.org/sites/default/files/HCRO/ods.json", logfile='online_ods_mon.txt', sep=','):
         """
         Checks the online ODS URL against a local log to update for active records.  Typically used in a crontab to monitor
         the active ODS records posted.
@@ -460,14 +460,10 @@ class ODS:
         self.cull_by_time(name='from_web', cull_by='inactive')
 
         self.ods_instance('from_log')
-        self.add_from_file(logfile, name='from_log', sep=',')
-        if check4duplicates:
-            self.cull_by_duplicate(name='from_log')
+        self.add_from_file(logfile, name='from_log', sep=sep)
+        self.merge('from_web', 'from_log', remove_duplicates=True)
 
-        for entry in self.ods['from_web'].entries:
-            if not self.check.is_duplicate(self.ods['from_log'], entry):
-                self.add_from_list([entry], name='from_log')
-        self.ods['from_log'].export2file(logfile, sep=',')
+        self.ods['from_log'].export2file(logfile, sep=sep)
 
     ##############################################MODIFY#########################################
     # Methods that modify the existing self.ods
@@ -683,13 +679,28 @@ class ODS:
         self.ods[name].gen_info()
         self.instance_report(name=name)
 
-    def merge(self, from_ods, to_ods=ods_standard.DEFAULT_WORKING_INSTANCE):
+    def merge(self, from_ods, to_ods=ods_standard.DEFAULT_WORKING_INSTANCE, remove_duplicates=True):
+        """
+        Merge two ODS instances.
+
+        Parameters
+        ----------
+        from_ods : str
+            Name of ODS instance entries to be merged
+        to_ods : str
+            Name of ODS instance to be the merged ODS
+        remove_duplicates : bool
+            Flag to purge merged ODS of duplicates
+
+        """
         logger.info(f"Updating {to_ods} from {from_ods}")
         self.add_from_list(self.ods[from_ods].entries, name=to_ods)
+        if remove_duplicates:
+            self.cull_by_duplicate(name=to_ods)
 
     def add_from_list(self, entries, name=None):
         """
-        Append a records to self.ods, using defaults then entries.
+        Append a records to self.ods[name], using defaults then entries.
         
         Parameters
         ----------
@@ -803,7 +814,7 @@ class ODS:
 
     def write_file(self, file_name, name=None, sep=','):
         """
-        Export teh ods to a data file.
+        Export the ods to a data file.
 
         Parameters
         ----------
@@ -811,6 +822,8 @@ class ODS:
             Name of data file
         name : str or None
             ODS instance
+        sep : str
+            Separator to use
 
         """
         name = self.get_instance_name(name)

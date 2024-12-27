@@ -11,7 +11,7 @@ class ODSCheck:
     Utilities to check ODS instances/records.
 
     """
-    def __init__(self, alert='info', standard=None):
+    def __init__(self, alert='INFO', standard=None):
         """
         Parameter
         ---------
