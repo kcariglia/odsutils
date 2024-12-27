@@ -7,7 +7,7 @@ ap.add_argument('-o', '--ods_file', help="Name of ods json file to read.", defau
 ap.add_argument('-d', '--defaults', help="Name of json file holding default values or descriptor", default=None)
 ap.add_argument('-q', '--quiet', help="Flag to quiet printing.", action='store_true')
 ap.add_argument('--version', help="Version to use", default='latest')
-ap.add_argument('--alert', help="Level for checking ('[n]one', '[w]arn', '[e]rror').", default='warn')
+ap.add_argument('--output', help="Logging output level", default='INFO')
 # Data file options
 ap.add_argument('-f', '--data_file', help="Name of data file to read", default=None)
 ap.add_argument('--sep', help="Separator for the data file - 'auto' tries to determine from first line", default='auto')
@@ -26,7 +26,7 @@ ap.add_argument('-i', '--invalid_cull', help="Cull ods of invalid entries", acti
 ap.add_argument('-w', '--write', help="Write ods to this json file name", default=False)
 ap.add_argument('-v', '--view', help="View ods", action='store_true')
 ap.add_argument('-g', '--graph', help="Show text plot of ods timing.", action='store_true')
-ap.add_argument('-e', 'export', help="Write ODS instance to data file if name included", default=None)
+ap.add_argument('-e', '--export', help="Write ODS instance to data file if name included", default=None)
 ap.add_argument('--block', help="Number of ods records to show in each view block", default=7)
 ap.add_argument('-s', '--std_show', help="Show the terms of an ODS record", action='store_true')
 # ODS fields
@@ -51,7 +51,7 @@ ap.add_argument('--notes', help="ODS field", default=None)
 
 args = ap.parse_args()
 
-ods = ods_engine.ODS(version=args.version, alert=args.alert, quiet=args.quiet)
+ods = ods_engine.ODS(version=args.version, output=args.output.upper())
 if args.std_show:
     print(ods.ods[ods.working_instance].standard)
 
@@ -62,11 +62,10 @@ if args.ods_file:
 ods.get_defaults_dict(args.defaults)
 
 if args.data_file:
-    ods.add_from_file(data_file_name=args.data_file, override=args.override,
-                         sep=args.sep, replace_char=args.replace_char, header_map=args.header_map)
+    ods.add_from_file(data_file_name=args.data_file, sep=args.sep, replace_char=args.replace_char, header_map=args.header_map)
 
 if args.src_end_utc is not None:  # Assume that this one will always be used outside of defaults
-    ods.add_new_record_from_namespace(ns=args, override=args.override)
+    ods.add_new_record_from_namespace(ns=args)
 
 if args.time_cull:
     ods.cull_by_time(cull_time=args.time_cull, cull_by=args.cull_by)

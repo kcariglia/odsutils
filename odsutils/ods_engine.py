@@ -177,18 +177,16 @@ class ODSInstance:
         """
         self.make_time()
         sorted_ods = tools.sort_entries(self.entries, [self.standard.start, self.standard.stop], collapse=False, reverse=False)
-        ods_start = sorted_ods[0][self.standard.start]
-        ods_stop = sorted_ods[-1][self.standard.stop]
-        dticks = ((ods_stop - ods_start) / (numticks + 2)).to('second').value  # Not used yet.
+        #dticks = ((self.latest - self.earliest) / (numticks + 2)).to('second').value  # Not used yet.
 
-        dt = ((ods_stop - ods_start) / numpoints).to('second').value
+        dt = ((self.latest - self.earliest) / numpoints).to('second').value
         rows = []
         for rec in sorted_ods:
             rows.append(rec[self.standard.source])
         stroff = max([len(x) for x in rows]) + 1
 
-        start_label, stop_label = f"{ods_start.datetime.isoformat(timespec='seconds')}", f"{ods_stop.datetime.isoformat(timespec='seconds')}"
-        current = int((tools.make_time('now') - ods_start).to('second').value / dt)
+        start_label, stop_label = f"{self.earliest.datetime.isoformat(timespec='seconds')}", f"{self.latest.datetime.isoformat(timespec='seconds')}"
+        current = int((tools.make_time('now') - self.earliest).to('second').value / dt)
         show_current = True if (current > -1 and current < numpoints) else False
         len_label = len(start_label)
         stroff = max(stroff, len_label // 2 + 1)
@@ -202,8 +200,8 @@ class ODSInstance:
         print(f"{dashrow}\n{graphhdr}\n{labelrow}\n{tickrow}")
         for rec in sorted_ods:
             row = ['.'] * numpoints
-            starting = int(floor((rec[self.standard.start]  -  ods_start).to('second').value / dt))
-            ending = int(floor((rec[self.standard.stop] - ods_start).to('second').value / dt)) + 1
+            starting = int(floor((rec[self.standard.start]  -  self.earliest).to('second').value / dt))
+            ending = int(floor((rec[self.standard.stop] - self.earliest).to('second').value / dt)) + 1
             for star in range(starting, ending):
                 try:
                     row[star] = '*'
@@ -458,7 +456,7 @@ class ODS:
         """
         self.ods_instance('from_web')
         self.read_ods(tools.get_json_url(url), name='from_web')
-        self.cull_ods_by_time(name='from_web', cull_by='inactive')
+        self.cull_by_time(name='from_web', cull_by='inactive')
 
         self.ods_instance('from_log')
         self.add_from_file(logfile, name='from_log', sep=',')
@@ -585,7 +583,7 @@ class ODS:
             logger.error(f"Invalid cull parameter: {cull_by}")
         name = self.get_instance_name(name)
         cull_time = tools.make_time(cull_time)
-        logger.info(f"Culling ODS for {cull_time} by {cull_by}:", end='  ')
+        logger.info(f"Culling ODS for {cull_time} by {cull_by}")
         self.ods[name].make_time()
         culled_ods = []
         for rec in self.ods[name].entries:
@@ -615,7 +613,7 @@ class ODS:
         """
         name = self.get_instance_name(name)
         self.ods[name].gen_info()
-        logger.info("Culling ODS for invalid records:  ", end='  ')
+        logger.info("Culling ODS for invalid records.")
         if not len(self.ods[name].valid_records):
             logger.info("retaining all.")
             return
@@ -637,7 +635,7 @@ class ODS:
         """
         name = self.get_instance_name(name)
         self.ods[name].convert_time_to_str()
-        logger.info("Culling ODS for duplicates:  ", end='  ')
+        logger.info("Culling ODS for duplicates")
         starting_number = copy(self.ods[name].number_of_records)
         self.ods[name].entries = tools.sort_entries(self.ods[name].entries, self.ods[name].standard.sort_order_time, collapse=True, reverse=False)
         if len(self.ods[name].entries) == starting_number:
@@ -650,24 +648,28 @@ class ODS:
     ##############################################ADD############################################
     # Methods that add to the existing self.ods
 
-    def add_new_record(self, name=None, **kwargs):
+    def __add_new_record(self, name, **kwargs):
         """
-        Append a new record to self.ods, using defaults then kwargs.
-        
-        Between defaults and kwargs, must be complete/valid ods record unless override is True.
+        INTERNAL Append a new record to self.ods, internal version, no gen_info etc called.
 
         """
-        name = self.get_instance_name(name)
         new_rec = self.init_new_record(name=name)
         new_rec.update(kwargs)
         self.ods[name].entries.append(new_rec)
+
+    def add_new_record(self, name=None, **kwargs):
+        """
+        Append a new record to self.ods.
+
+        """
+        name = self.get_instance_name(name)
+        self.__add_new_record(name=name, **kwargs)
         self.ods[name].gen_info()
+        self.instance_report(name=name)
 
     def add_new_record_from_namespace(self, ns, name=None):
         """
         Appends a new ods record to self.ods supplied as a Namespace
-        
-        Between defaults and namespace, must be complete/valid ods record unless override is True.
 
         """
         name = self.get_instance_name(name)
@@ -675,7 +677,8 @@ class ODS:
         for key, val in vars(ns).items():
             if key in self.ods[name].standard.ods_fields:
                 kwargs[key] = val
-        self.add_new_record(name=name, **kwargs)
+        self.__add_new_record(name=name, **kwargs)
+        self.ods[name].gen_info()
         self.instance_report(name=name)
 
     def merge(self, from_ods, to_ods=ods_standard.DEFAULT_WORKING_INSTANCE):
@@ -686,35 +689,27 @@ class ODS:
         """
         Append a records to self.ods, using defaults then entries.
         
-        Between defaults and entries, must be complete/valid ods record unless override is True.
-        
         Parameters
         ----------
         entries : list of dicts
             List of dictionaries containing ODS fields
-        override : bool
-            add record regardless of passing ods checking
 
         """
         name = self.get_instance_name(name)
         for entry in entries:
-            self.add_new_record(name=name, **entry)
+            self.__add_new_record(name=name, **entry)
         logger.info(f"Read {len(entries)} records from list.")
         self.ods[name].gen_info()
         self.instance_report(name=name)
 
-    def add_from_file(self, data_file_name, override=False, name=None, sep='auto', replace_char=None, header_map=None):
+    def add_from_file(self, data_file_name, name=None, sep='auto', replace_char=None, header_map=None):
         """
         Append new records from a data file to self.ods; assumes the first line is a header.
-
-        Between defaults and data file columns, must be a complete/valid ods record unless override is True.
 
         Parameters
         ----------
         data_file_name : str
             Name of input data file.
-        override : bool
-            add record regardless of passing ods checking
         sep : str
             separator
         replace_char : None, str, tuple, list
@@ -739,7 +734,7 @@ class ODS:
         self.data_file_name = data_file_name
         obs_list = tools.read_data_file(self.data_file_name, sep=sep, replace_char=replace_char, header_map=header_map)
         for _, row in obs_list.iterrows():
-            self.add_new_record(name=name, **row.to_dict())
+            self.__add_new_record(name=name, **row.to_dict())
         logger.info(f"Read {len(obs_list.index)} records from {self.data_file_name}.")
         self.ods[name].gen_info()
         self.instance_report(name=name)
