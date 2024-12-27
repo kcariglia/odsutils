@@ -190,8 +190,8 @@ class ODSInstance:
         show_current = True if (current > -1 and current < numpoints) else False
         len_label = len(start_label)
         stroff = max(stroff, len_label // 2 + 1)
-        llrl = ' ' * (stroff - 1 - len_label // 2)
-        labelrow = f"{llrl}{start_label}{' '*(numpoints-len_label-1)}{stop_label}"
+        spaces = ' ' * (stroff - 1 - len_label // 2), ' ' * (numpoints-len_label-1)
+        labelrow = f"{spaces[0]}{start_label}{spaces[1]}{stop_label}"
         tickrow = [' '] * (stroff) + ['|'] + [' '] * (numpoints-2) + ['|']
         if show_current:
             tickrow[current + stroff] = '0'
