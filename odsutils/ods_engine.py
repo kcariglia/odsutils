@@ -663,7 +663,7 @@ class ODS:
         name = self.get_instance_name(name)
         self.ods[name].convert_time_to_str()
         logger.info("Culling ODS for duplicates")
-        starting_number = copy(self.ods[name].number_of_records)
+        starting_number = len(self.ods[name].entries)
         self.ods[name].entries = tools.sort_entries(self.ods[name].entries, self.ods[name].standard.sort_order_time, collapse=True, reverse=False)
         if len(self.ods[name].entries) == starting_number:
             logger.info("retaining all.")
