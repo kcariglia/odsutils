@@ -157,13 +157,3 @@ def generate_observation_times(start, obs_len_sec):
         times.append([current, stop])
         current += TimeDelta(obs+1, format='sec')
     return times
-
-
-class Base:
-    def qprint(self, msg, end='\n'):
-        if msg.startswith("ERROR:"):
-            raise ValueError(msg)
-        if not hasattr(self, 'quiet'):
-            self.quiet = False
-        if not self.quiet or msg.startswith("WARNING:"):
-            print(msg, end=end)

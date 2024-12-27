@@ -1,15 +1,17 @@
 from . import ods_tools as tools
 from astropy.time import TimeDelta
+import logging
 
 
-class ODSCheck(tools.Base):
+logger = logging.getLogger(__name__)
+
+
+class ODSCheck:
     """
     Utilities to check ODS instances/records.
 
     """
-    prefixes = {'n': '', 'w': 'WARNING: ', 'e': 'ERROR: '}
-
-    def __init__(self, alert='warn', standard=None):
+    def __init__(self, alert='info', standard=None):
         """
         Parameter
         ---------
@@ -17,8 +19,11 @@ class ODSCheck(tools.Base):
             Default alert
 
         """
-        self.quiet = True if alert == 'none' else False
-        self.pre = self.prefixes[alert[0].lower()]
+        level = getattr(logging, alert.upper())
+        logger.setLevel(level)
+        ch = logging.StreamHandler()
+        ch.setLevel(level)
+        logger.addHandler(ch)
         self.standard = standard
 
     def update_standard(self, standard):
@@ -146,7 +151,7 @@ class ODSCheck(tools.Base):
 
         """
         if adjust not in ['start', 'stop']:
-            self.qprint(f'WARNING: Invalid adjust spec - {adjust}')
+            logger.warning(f'Invalid adjust spec - {adjust}')
             return ods
         adjusted_entries = tools.sort_entries(ods, [ods.standard.start, ods.standard.stop])
         for i in range(len(adjusted_entries) - 1):
@@ -160,7 +165,7 @@ class ODSCheck(tools.Base):
                 adjusted_entries[i].update({ods.standard.stop: this_stop.datetime.isoformat()})
                 adjusted_entries[i+1].update({ods.standard.start: next_start.datetime.isoformat()})
                 if next_start < this_stop:
-                    self.qprint(f"{self.pre}New start is before stop so still need to fix.")
+                    logger.warning(f"{self.pre}New start is before stop so still need to fix.")
         return adjusted_entries
 
     def coverage(self, ods, time_step_min=1):
@@ -182,7 +187,7 @@ class ODSCheck(tools.Base):
 
         sorted_entries = tools.sort_entries(ods.entries, [ods.standard.start, ods.standard.stop])
         ods_start, ods_stop = tools.make_time(sorted_entries[0][ods.standard.start]), tools.make_time(sorted_entries[-1][ods.standard.stop])
-        print(f"Checking coverage from {ods_start} - {ods_stop}")
+        logger.info(f"Checking coverage from {ods_start} - {ods_stop}")
         dt = TimeDelta(time_step_min * 60.0, format='sec')
         this_time = ods_start - dt
         while this_time < ods_stop:

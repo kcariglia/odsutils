@@ -221,7 +221,7 @@ class ODSInstance:
         tools.write_data_file(filename, self.entries, self.standard.ods_fields, sep=sep)
 
 
-class ODS(tools.Base):
+class ODS:
     """
     Utilities to handle ODS instances.
 
@@ -229,7 +229,7 @@ class ODS(tools.Base):
     Adding the <working_instance> allows for flexibility, however generally one will only make/use one key denoted 'primary'.
 
     """
-    def __init__(self, version='latest', alert='warn', working_instance=ods_standard.DEFAULT_WORKING_INSTANCE, quiet=False):
+    def __init__(self, version='latest', working_instance=ods_standard.DEFAULT_WORKING_INSTANCE, output='INFO'):
         """
         Parameters
         ----------
@@ -239,16 +239,20 @@ class ODS(tools.Base):
             Action for ODS checking ['none', 'warn', 'error']
         working_instance : str
             Key to use for the ods instance in use.
-        quiet : bool
-            If True, quiets printing
+        output : str
+            One of the logging levels 'DEBUG', 'INFO', 'WARNING', 'ERROR'
 
         """
-        self.quiet = quiet
+        level = getattr(logging, output.upper())
+        logger.setLevel(level)
+        ch = logging.StreamHandler()
+        ch.setLevel(level)
+        logger.addHandler(ch)
         self.version = version
         self.working_instance = working_instance
         self.reset_ods_instances('all', version=version)
         self.defaults = {}
-        self.check = ODSCheck(alert=alert, standard=self.ods[working_instance].standard)
+        self.check = ODSCheck(alert=output, standard=self.ods[working_instance].standard)
 
     def reset_ods_instances(self, instances='all', version='latest'):
         """
@@ -269,8 +273,8 @@ class ODS(tools.Base):
         for name in tools.listify(instances):
             if name in self.ods:
                 self.ods[name] = self.ods_instance(name=name, version=version)
-            elif not self.quiet:
-                print(f"{name} is not an instance.")
+            else:
+                logger.warning(f"{name} is not an instance.")
 
     def ods_instance(self, name, version='latest', set_as_working=False):
         """
@@ -287,8 +291,7 @@ class ODS(tools.Base):
 
         """
         if name in self.ods:
-            if not self.quiet:
-                print(f"{name} already exists -- try self.reset_ods_instances")
+            logger.warning(f"{name} already exists -- try self.reset_ods_instances")
             return
         self.ods[name] = ODSInstance(
             name = name,
@@ -308,8 +311,7 @@ class ODS(tools.Base):
 
         """
         self.working_instance = name
-        if not self.quiet:
-            print(f"The new ODS working instance is {self.working_instance}")
+        logger.info(f"The new ODS working instance is {self.working_instance}")
 
     def get_instance_name(self, name=None):
         """
@@ -329,8 +331,7 @@ class ODS(tools.Base):
             return self.working_instance
         if name in self.ods:
             return name
-        if not self.quiet:
-            print(f"{name} does not exist -- try making it with self.ods_instance")
+        logger.error(f"{name} does not exist -- try making it with self.ods_instance")
 
     def read_ods(self, ods_input, name=None):
         """
@@ -346,14 +347,20 @@ class ODS(tools.Base):
         """
         name = self.get_instance_name(name)
         self.ods[name].read(ods_input)
-        self.qprint(f"Read {self.ods[name].number_of_records} records from {self.ods[name].input}")
+        logger.info(f"Read {self.ods[name].number_of_records} records from {self.ods[name].input}")
         self.instance_report(name=name)
 
     def instance_report(self, name=None):
         name = self.get_instance_name(name)
-        print(f"{len(self.ods[name].invalid_records)} / {self.ods[name].number_of_records} were not valid.")
-        for ctr, msg in self.ods[name].invalid_records.items():
-            print(f"Entry {ctr}:  {', '.join(msg)}")
+        number_of_invalid_records = len(self.ods[name].invalid_records)
+        if self.ods[name].number_of_records and number_of_invalid_records == self.ods[name].number_of_records:
+            logger.error(f"All records ({self.ods[name].number_of_records}) were invalid.")
+        elif number_of_invalid_records:
+            logger.warning(f"{number_of_invalid_records} / {self.ods[name].number_of_records} were not valid.")
+            for ctr, msg in self.ods[name].invalid_records.items():
+                logger.warning(f"Entry {ctr}:  {', '.join(msg)}")
+        else:
+            logger.info(f"{self.ods[name].number_of_records} are all valid.")
 
     def get_defaults_dict(self, defaults='from_ods'):
         """
@@ -390,11 +397,11 @@ class ODS(tools.Base):
                     if key != 'invalid' and len(val) == 1:
                         self.defaults[key] = list(val)[0]
             else:
-                print(f"Not valid default case: {defaults}")
+                logger.error(f"Not valid default case: {defaults}")
 
-        self.qprint(f"Default values from {defaults}")
+        logger.info(f"Default values from {defaults}")
         for key, val in self.defaults.items():
-            self.qprint(f"\t{key:26s}  {val}")
+            logger.info(f"\t{key:26s}  {val}")
 
     def init_new_record(self, name=None):
         """
@@ -527,16 +534,16 @@ class ODS(tools.Base):
         name = self.get_instance_name(name)
         if times is not None:
             if len(times) != self.ods[name].number_of_records:
-                self.qprint("WARNING: times list doesn't have the right number of entries")
+                logger.warning("times list doesn't have the right number of entries")
                 return
         elif start is None or obs_len_sec is None:
-            self.qprint("WARNING:  haven't specified enough parameters.")
+            logger.warning("haven't specified enough parameters.")
             return
         else:
             if not isinstance(obs_len_sec, list):
                 obs_len_sec = [obs_len_sec] * self.ods[name].number_of_records
             elif len(obs_len_sec) != self.ods[name].number_of_records:
-                self.qprint("WARNING: obs_len_sec doesn't have the right number of entries")
+                logger.warning("obs_len_sec doesn't have the right number of entries")
                 return
             times = tools.generate_observation_times(start, obs_len_sec)
         for i, tt in enumerate(times):
@@ -559,10 +566,10 @@ class ODS(tools.Base):
 
         """
         if cull_by not in ['stale', 'inactive']:
-            print(f"Invalid cull parameter: {cull_by}")
+            logger.error(f"Invalid cull parameter: {cull_by}")
         name = self.get_instance_name(name)
         cull_time = tools.make_time(cull_time)
-        self.qprint(f"Culling ODS for {cull_time} by {cull_by}:", end='  ')
+        logger.info(f"Culling ODS for {cull_time} by {cull_by}:", end='  ')
         self.ods[name].make_time()
         culled_ods = []
         for rec in self.ods[name].entries:
@@ -577,7 +584,7 @@ class ODS(tools.Base):
             if add_it:
                 culled_ods.append(rec)
         self.ods[name].entries = copy(culled_ods)
-        self.qprint(f"retaining {len(self.ods[name].entries)} of {self.ods[name].number_of_records}")
+        logger.info(f"retaining {len(self.ods[name].entries)} of {self.ods[name].number_of_records}")
         self.ods[name].gen_info()
 
     def cull_by_invalid(self,  name=None):
@@ -592,9 +599,9 @@ class ODS(tools.Base):
         """
         name = self.get_instance_name(name)
         self.ods[name].gen_info()
-        self.qprint("Culling ODS for invalid records:  ", end='  ')
+        logger.info("Culling ODS for invalid records:  ", end='  ')
         if not len(self.ods[name].valid_records):
-            self.qprint("retaining all.")
+            logger.info("retaining all.")
             return
         starting_number = copy(self.ods[name].number_of_records)
         culled_ods = []
@@ -602,7 +609,10 @@ class ODS(tools.Base):
             culled_ods.append(copy(self.ods[name].entries[irec]))
         self.ods[name].entries = culled_ods
         self.ods[name].gen_info()
-        self.qprint(f"retaining {self.ods[name].number_of_records} of {starting_number}")
+        if not self.ods[name].number_of_records:
+            logger.warning("Retaining no records.")
+        else:
+            logger.info(f"retaining {self.ods[name].number_of_records} of {starting_number}")
     
     def cull_by_duplicate(self, name=None):
         """
@@ -611,14 +621,14 @@ class ODS(tools.Base):
         """
         name = self.get_instance_name(name)
         self.ods[name].convert_time_to_str()
-        self.qprint("Culling ODS for duplicates:  ", end='  ')
+        logger.info("Culling ODS for duplicates:  ", end='  ')
         starting_number = copy(self.ods[name].number_of_records)
         self.ods[name].entries = tools.sort_entries(self.ods[name].entries, self.ods[name].standard.sort_order_time, collapse=True, reverse=False)
         if len(self.ods[name].entries) == starting_number:
-            self.qprint("retaining all.")
+            logger.info("retaining all.")
             return
         self.ods[name].gen_info()
-        self.qprint(f"retaining {self.ods[name].number_of_records} of {starting_number}")
+        logger.info(f"retaining {self.ods[name].number_of_records} of {starting_number}")
 
 
     ##############################################ADD############################################
@@ -653,7 +663,7 @@ class ODS(tools.Base):
         self.instance_report(name=name)
 
     def merge(self, from_ods, to_ods=ods_standard.DEFAULT_WORKING_INSTANCE):
-        print(f"Updating {to_ods} from {from_ods}")
+        logger.info(f"Updating {to_ods} from {from_ods}")
         self.add_from_list(self.ods[from_ods].entries, name=to_ods)
 
     def add_from_list(self, entries, name=None):
@@ -673,7 +683,7 @@ class ODS(tools.Base):
         name = self.get_instance_name(name)
         for entry in entries:
             self.add_new_record(name=name, **entry)
-        self.qprint(f"Read {len(entries)} records from list.")
+        logger.info(f"Read {len(entries)} records from list.")
         self.ods[name].gen_info()
         self.instance_report(name=name)
 
@@ -714,7 +724,7 @@ class ODS(tools.Base):
         obs_list = tools.read_data_file(self.data_file_name, sep=sep, replace_char=replace_char, header_map=header_map)
         for _, row in obs_list.iterrows():
             self.add_new_record(name=name, **row.to_dict())
-        self.qprint(f"Read {len(obs_list.index)} records from {self.data_file_name}.")
+        logger.info(f"Read {len(obs_list.index)} records from {self.data_file_name}.")
         self.ods[name].gen_info()
         self.instance_report(name=name)
 
@@ -735,7 +745,7 @@ class ODS(tools.Base):
         """
         name = self.get_instance_name(name)
         if not self.ods[name].number_of_records:
-            self.qprint("No records to print.")
+            logger.info("No records to print.")
             return
         self.ods[name].view(order=order, number_per_block=number_per_block)
     
@@ -746,7 +756,7 @@ class ODS(tools.Base):
         """
         name = self.get_instance_name(name)
         if not self.ods[name].number_of_records:
-            self.qprint("No records to graph.")
+            logger.info("No records to graph.")
             return
         self.ods[name].graph(numpoints=numpoints)
 
@@ -764,7 +774,7 @@ class ODS(tools.Base):
         """
         name = self.get_instance_name(name)
         if not self.ods[name].number_of_records:
-            self.qprint("WARNING: Writing an empty ODS file!")
+            logger.warning("Writing an empty ODS file!")
         self.ods[name].write(file_name)
 
     def write_file(self, file_name, name=None, sep=','):
@@ -781,5 +791,5 @@ class ODS(tools.Base):
         """
         name = self.get_instance_name(name)
         if not self.ods[name].number_of_records:
-            self.qprint("WARNING: Writing an empty ODS file!")
+            logger.warning("Writing an empty ODS file!")
         self.ods[name].export2file(file_name, sep=sep)
