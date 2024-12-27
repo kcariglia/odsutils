@@ -442,7 +442,7 @@ class ODS:
         rec.update(self.defaults)
         return rec
 
-    def online_ods_monitor(self, url="https://www.seti.org/sites/default/files/HCRO/ods.json", logfile='online_ods_mon.txt'):
+    def online_ods_monitor(self, url="https://www.seti.org/sites/default/files/HCRO/ods.json", logfile='online_ods_mon.txt', check4duplicates=False):
         """
         Checks the online ODS URL against a local log to update for active records.  Typically used in a crontab to monitor
         the active ODS records posted.
@@ -461,7 +461,8 @@ class ODS:
 
         self.ods_instance('from_log')
         self.add_from_file(logfile, name='from_log', sep=',')
-        self.cull_by_duplicate(name='from_log')
+        if check4duplicates:
+            self.cull_by_duplicate(name='from_log')
 
         for entry in self.ods['from_web'].entries:
             if not self.check.is_duplicate(self.ods['from_log'], entry):
