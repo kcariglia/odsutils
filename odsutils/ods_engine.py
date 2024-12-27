@@ -9,7 +9,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 class ODSInstance:
-    """Very light class containing the data, some core classes and metadata -- most handling is done within ODS."""
+    """Light class containing the data, some core classes and metadata -- most handling is done within ODS."""
 
     def __init__(self, name, version='latest'):
         """
@@ -248,9 +248,19 @@ class ODSInstance:
         tools.write_json_file(file_name, {self.standard.data_key: self.entries})
 
     def export2file(self, filename, sep=','):
+        """
+        Export the ods to a data file.
+
+        Parameters
+        ----------
+        file_name : str
+            Name of data file
+        sep : str
+            Separator to use
+
+        """
         self.convert_time_to_str()
         tools.write_data_file(filename, self.entries, self.standard.ods_fields, sep=sep)
-
 
 class ODS:
     """
@@ -465,6 +475,28 @@ class ODS:
     ##############################################MODIFY#########################################
     # Methods that modify the existing self.ods
 
+    def update_entry(self, entry, updates, name=None):
+        """
+        Update the entry number with the updates dict values.
+
+        Parameters
+        ----------
+        entry : int
+            Number of entry to update
+        updates : dict
+            Dictionary containing the updates
+        name : str, None
+            Instance to update
+
+        """
+        name = self.get_instance_name(name)
+        if isinstance(entry, int):
+            self.ods[name].entries[entry].update(updates)
+        else:
+            logger.info('No other update entry options.')
+            return
+        self.ods[name].gen_info()
+
     def update_by_elevation(self, el_lim_deg=10.0, dt_sec=120, name=None, show_plot=False):
         """
         Check an ODS for sources above an elevation limit.  Will update the times for those above that limit.
@@ -519,7 +551,7 @@ class ODS:
 
         """
         name = self.get_instance_name(name)
-        self.ods = self.check.continuity(self.ods[name], time_offset_sec=time_offset_sec, adjust=adjust)
+        self.ods[name].entries = self.check.continuity(self.ods[name], time_offset_sec=time_offset_sec, adjust=adjust)
         self.ods[name].gen_info()
 
     def update_ods_times(self, times=None, start=None, obs_len_sec=None, name=None):
@@ -593,8 +625,8 @@ class ODS:
             if add_it:
                 culled_ods.append(rec)
         self.ods[name].entries = copy(culled_ods)
-        logger.info(f"retaining {len(self.ods[name].entries)} of {self.ods[name].number_of_records}")
         self.ods[name].gen_info()
+        logger.info(f"retaining {len(self.ods[name].entries)} of {self.ods[name].number_of_records}")
 
     def cull_by_invalid(self,  name=None):
         """
@@ -641,7 +673,7 @@ class ODS:
 
 
     ##############################################ADD############################################
-    # Methods that add to/update the existing self.ods
+    # Methods that add to the existing self.ods
 
     def add_new_record(self, name=None, **kwargs):
         """
@@ -717,13 +749,6 @@ class ODS:
             - dict: {<ods_header_name>: <datafile_header_name>}
 
         """
-        if sep == 'auto':
-            with open(data_file_name, 'r') as fp:
-                header = fp.readline()
-            for s in [',', '\t', ' ', ';']:
-                if s in header:
-                    sep = s
-                    break
         name = self.get_instance_name(name)
         self.data_file_name = data_file_name
         obs_list = tools.read_data_file(self.data_file_name, sep=sep, replace_char=replace_char, header_map=header_map)
