@@ -191,7 +191,8 @@ class ODSInstance:
         len_label = len(start_label)
         stroff = max(stroff, len_label // 2 + 1)
         llrl = stroff - 1 - len_label // 2
-        labelrow = f"{' ':{llrl}s}{start_label}{' '*(numpoints-len_label-1)}{stop_label}"
+        #labelrow = f"{' ':{llrl}s}{start_label}{' '*(numpoints-len_label-1)}{stop_label}"
+        labelrow = '   '
         tickrow = [' '] * (stroff) + ['|'] + [' '] * (numpoints-2) + ['|']
         if show_current:
             tickrow[current + stroff] = '0'
