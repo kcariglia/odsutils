@@ -5,6 +5,11 @@ from . import ods_tools as tools
 from . import __version__
 from numpy import floor
 import logging
+import warnings
+from erfa import ErfaWarning
+with warnings.catch_warnings():
+    warnings.filterwarnings("ignore", category=ErfaWarning)
+
 
 logger = logging.getLogger(__name__)
 
