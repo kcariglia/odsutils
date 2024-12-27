@@ -5,7 +5,6 @@ from odsutils import ods_engine
 ap = argparse.ArgumentParser()
 ap.add_argument('-o', '--ods_file', help="Name of ods json file to read.", default=None)
 ap.add_argument('-d', '--defaults', help="Name of json file holding default values or descriptor", default=None)
-ap.add_argument('-q', '--quiet', help="Flag to quiet printing.", action='store_true')
 ap.add_argument('--version', help="Version to use", default='latest')
 ap.add_argument('--output', help="Logging output level", default='INFO')
 # Data file options
