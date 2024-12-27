@@ -31,6 +31,27 @@ class ODSInstance:
         self.input_sets = {'invalid': set()}
         self.time_format = 'string'
 
+    def new_record(self, entry={}, defaults={}):
+        """
+        Add a new record, with each value set to None, then apply defaults, then new fields and append to entries.
+
+        Parameter
+        ---------
+        defaults : dict
+            Dictionary containing default values
+        fields : dict
+            Dictionary containing new fields.
+
+        """
+        rec = {}
+        for key in self.standard.ods_fields:
+            rec[key] = None
+            if key in entry:
+                rec[key] = copy(entry[key])
+            elif key in defaults:
+                rec[key] = copy(defaults[key])
+        self.entries.append(rec)
+
     def read(self, ods_input):
         """
         Read in an existing ods file or dictionary and pull out input sets.
@@ -418,30 +439,6 @@ class ODS:
         for key, val in self.defaults.items():
             logger.info(f"\t{key:26s}  {val}")
 
-    def init_new_record(self, name=None):
-        """
-        Generate a full record, with each value set to None and apply defaults.
-
-        Not associated with an instance.
-
-        Parameter
-        ---------
-        name : str, None
-            Needed to get the appropriate standard.
-
-        Return
-        ------
-        dict
-            A new initialized ods record
-
-        """
-        name = self.get_instance_name(name)
-        rec = {}
-        for key in self.ods[name].standard.ods_fields:
-            rec[key] = None
-        rec.update(self.defaults)
-        return rec
-
     def online_ods_monitor(self, url="https://www.seti.org/sites/default/files/HCRO/ods.json", logfile='online_ods_mon.txt', sep=','):
         """
         Checks the online ODS URL against a local log to update for active records.  Typically used in a crontab to monitor
@@ -644,16 +641,7 @@ class ODS:
 
 
     ##############################################ADD############################################
-    # Methods that add to the existing self.ods
-
-    def __add_new_record(self, name, **kwargs):
-        """
-        INTERNAL Append a new record to self.ods, internal version, no gen_info etc called.
-
-        """
-        new_rec = self.init_new_record(name=name)
-        new_rec.update(kwargs)
-        self.ods[name].entries.append(new_rec)
+    # Methods that add to/update the existing self.ods
 
     def add_new_record(self, name=None, **kwargs):
         """
@@ -661,23 +649,16 @@ class ODS:
 
         """
         name = self.get_instance_name(name)
-        self.__add_new_record(name=name, **kwargs)
+        self.ods[name].new_record(kwargs, defaults=self.defaults)
         self.ods[name].gen_info()
         self.instance_report(name=name)
 
-    def add_new_record_from_namespace(self, ns, name=None):
+    def add_from_namespace(self, ns, name=None):
         """
         Appends a new ods record to self.ods supplied as a Namespace
 
         """
-        name = self.get_instance_name(name)
-        kwargs = {}
-        for key, val in vars(ns).items():
-            if key in self.ods[name].standard.ods_fields:
-                kwargs[key] = val
-        self.__add_new_record(name=name, **kwargs)
-        self.ods[name].gen_info()
-        self.instance_report(name=name)
+        self.add_new_record(name=name, **vars(ns))
 
     def merge(self, from_ods, to_ods=ods_standard.DEFAULT_WORKING_INSTANCE, remove_duplicates=True):
         """
@@ -694,11 +675,9 @@ class ODS:
 
         """
         logger.info(f"Updating {to_ods} from {from_ods}")
-        self.add_from_list(self.ods[from_ods].entries, name=to_ods)
-        if remove_duplicates:
-            self.cull_by_duplicate(name=to_ods)
+        self.add_from_list(self.ods[from_ods].entries, name=to_ods, remove_duplicates=remove_duplicates)
 
-    def add_from_list(self, entries, name=None):
+    def add_from_list(self, entries, name=None, remove_duplicates=True):
         """
         Append a records to self.ods[name], using defaults then entries.
         
@@ -710,12 +689,14 @@ class ODS:
         """
         name = self.get_instance_name(name)
         for entry in entries:
-            self.__add_new_record(name=name, **entry)
+            self.ods[name].new_record(entry, defaults=self.defaults)
         logger.info(f"Read {len(entries)} records from list.")
+        if remove_duplicates:
+            self.cull_by_duplicate(name=name)
         self.ods[name].gen_info()
         self.instance_report(name=name)
 
-    def add_from_file(self, data_file_name, name=None, sep='auto', replace_char=None, header_map=None):
+    def add_from_file(self, data_file_name, name=None, sep='auto', replace_char=None, header_map=None, remove_duplicates=True):
         """
         Append new records from a data file to self.ods; assumes the first line is a header.
 
@@ -747,8 +728,10 @@ class ODS:
         self.data_file_name = data_file_name
         obs_list = tools.read_data_file(self.data_file_name, sep=sep, replace_char=replace_char, header_map=header_map)
         for _, row in obs_list.iterrows():
-            self.__add_new_record(name=name, **row.to_dict())
+            self.ods[name].new_record(row.to_dict(), defaults=self.defaults)
         logger.info(f"Read {len(obs_list.index)} records from {self.data_file_name}.")
+        if remove_duplicates:
+            self.cull_by_duplicate(name=name)
         self.ods[name].gen_info()
         self.instance_report(name=name)
 
