@@ -118,6 +118,8 @@ class ODSCheck:
         while(this_step < stop):
             times.append(this_step)
             this_step += dt
+        if not len(times):
+            return times
         times = tools.make_time(times)
         location = EarthLocation(lat = float(rec[standard.lat]) * u.deg, lon = float(rec[standard.lon]) * u.deg, height = float(rec[standard.ele]) * u.m)
 
