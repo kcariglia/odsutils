@@ -113,6 +113,7 @@ class ODSCheck:
         start = tools.make_time(rec[standard.start])
         stop = tools.make_time(rec[standard.stop])
         dt = TimeDelta(dt_sec, format='sec')
+        print(start, stop, dt)
         times = []
         this_step = start
         while(this_step < stop):
