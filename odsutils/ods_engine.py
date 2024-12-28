@@ -265,6 +265,7 @@ class ODS:
         updated_ods = []
         for rec in self.ods[name].entries:
             time_limits = self.check.observation(rec, el_lim_deg=el_lim_deg, dt_sec=dt_sec, show_plot=show_plot)
+            print(time_limits)
             if time_limits:
                 valid_rec = copy(rec)
                 valid_rec.update({self.ods[name].standard.start: time_limits[0], self.ods[name].standard.stop: time_limits[1]})
