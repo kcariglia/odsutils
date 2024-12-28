@@ -181,11 +181,14 @@ class ODSInstance:
         blocks[-1] = range(blocks[-1].start, self.number_of_records)
         order = order + [x for x in self.standard.ods_fields if x not in order]
         for blk in blocks:
+            header = ['Field'] + [str(i) for i in blk]
             data = []
             for key in order:
                 row = [key] + [self.entries[i][key] for i in blk]
                 data.append(row)
-            print(tabulate(data))
+            tble = tabulate(data, headers=header)
+            print(tble)
+            print('=' * len(tble.splitlines()[1]))
     
     def graph(self, numpoints=160, numticks=10):
         """
