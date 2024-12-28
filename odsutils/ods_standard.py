@@ -1,11 +1,8 @@
 from . import ods_tools as tools
 
-DEFAULT_WORKING_INSTANCE = 'primary'
+
 LATEST = 'A'
-PLOT_AZEL = 'Az vs El'
-PLOT_TIMEEL = 'Time vs El'
-REF_LATEST_TIME = '2026-12-31T23:59'
-REF_EARLIEST_TIME = '2020-01-01T00:00'
+
 
 class Standard_Version_A:
     """
