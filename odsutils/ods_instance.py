@@ -268,8 +268,5 @@ class ODSInstance:
 
         """
         self.convert_time_to_str()
-        if cols == 'all':
-            cols = list(self.standard.ods_fields.keys())
-        else:
-            cols = tools.listify(cols)
+        cols = list(self.standard.ods_fields.keys()) if cols == 'all' else cols = tools.listify(cols)
         tools.write_data_file(filename, self.entries, cols, sep=sep)
