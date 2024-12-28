@@ -61,15 +61,15 @@ class ODS:
         """
         if instances == 'all':
             self.ods = {}
-            self.ods_instance(name=self.working_instance, version=version)
+            self.new_ods_instance(name=self.working_instance, version=version)
             return
         for name in tools.listify(instances):
             if name in self.ods:
-                self.ods[name] = self.ods_instance(name=name, version=version)
+                self.ods[name] = self.new_ods_instance(name=name, version=version)
             else:
                 logger.warning(f"{name} is not an instance.")
 
-    def ods_instance(self, name, version='latest', set_as_working=False):
+    def new_ods_instance(self, name, version='latest', set_as_working=False):
         """
         Create a blank ODS instance and optionally set as the working instance.
 
@@ -86,7 +86,7 @@ class ODS:
         if name in self.ods:
             logger.warning(f"{name} already exists -- try self.reset_ods_instances")
             return
-        self.ods[name] = ODSInstance(
+        self.ods[name] = ods_instance.ODSInstance(
             name = name,
             version = version
         )
@@ -124,7 +124,7 @@ class ODS:
             return self.working_instance
         if name in self.ods:
             return name
-        logger.error(f"{name} does not exist -- try making it with self.ods_instance")
+        logger.error(f"{name} does not exist -- try making it with self.new_ods_instance")
 
     def read_ods(self, ods_input, name=None):
         """
@@ -209,11 +209,11 @@ class ODS:
             Local logfile to use.
 
         """
-        self.ods_instance('from_web')
+        self.new_ods_instance('from_web')
         self.read_ods(tools.get_json_url(url), name='from_web')
         self.cull_by_time(name='from_web', cull_by='inactive')
 
-        self.ods_instance('from_log')
+        self.new_ods_instance('from_log')
         self.add_from_file(logfile, name='from_log', sep=sep)
         self.merge('from_web', 'from_log', remove_duplicates=True)
 
