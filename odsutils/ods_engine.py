@@ -261,6 +261,7 @@ class ODS:
 
         """
         name = self.get_instance_name(name)
+        logger.info(f"Updating {name} for el limit {el_lim_deg}")
         updated_ods = []
         for rec in self.ods[name].entries:
             time_limits = self.check.observation(rec, el_lim_deg=el_lim_deg, dt_sec=dt_sec, show_plot=show_plot)
