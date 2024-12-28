@@ -196,7 +196,7 @@ class ODS:
         for key, val in self.defaults.items():
             logger.info(f"\t{key:26s}  {val}")
 
-    def online_ods_monitor(self, url="https://www.seti.org/sites/default/files/HCRO/ods.json", logfile='online_ods_mon.txt', sep=','):
+    def online_ods_monitor(self, url="https://www.seti.org/sites/default/files/HCRO/ods.json", logfile='online_ods_mon.txt', cols='all', sep=','):
         """
         Checks the online ODS URL against a local log to update for active records.  Typically used in a crontab to monitor
         the active ODS records posted.
@@ -207,6 +207,10 @@ class ODS:
             URL of online ODS server
         logfile : str
             Local logfile to use.
+        cols : str('all', csv-list) or list
+            Columns to write out.
+        sep : str
+            Separator to use in file.
 
         """
         self.new_ods_instance('from_web')
@@ -217,7 +221,7 @@ class ODS:
         self.add_from_file(logfile, name='from_log', sep=sep)
         self.merge('from_web', 'from_log', remove_duplicates=True)
 
-        self.ods['from_log'].export2file(logfile, sep=sep)
+        self.ods['from_log'].export2file(logfile, cols=cols, sep=sep)
 
     ##############################################MODIFY#########################################
     # Methods that modify the existing self.ods

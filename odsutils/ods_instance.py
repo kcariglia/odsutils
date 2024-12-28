@@ -253,7 +253,7 @@ class ODSInstance:
         self.convert_time_to_str()
         tools.write_json_file(file_name, {self.standard.data_key: self.entries})
 
-    def export2file(self, filename, sep=','):
+    def export2file(self, filename, cols='all', sep=','):
         """
         Export the ods to a data file.
 
@@ -261,9 +261,15 @@ class ODSInstance:
         ----------
         file_name : str
             Name of data file
+        cols : str ('all', csv-list) or list
+            List of entry keys
         sep : str
             Separator to use
 
         """
         self.convert_time_to_str()
-        tools.write_data_file(filename, self.entries, self.standard.ods_fields, sep=sep)
+        if cols == 'all':
+            cols = list(self.standard.ods_fields.keys())
+        else:
+            cols = tools.listify(cols)
+        tools.write_data_file(filename, self.entries, cols, sep=sep)
