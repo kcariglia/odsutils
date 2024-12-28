@@ -124,7 +124,7 @@ class ODS:
             return self.working_instance
         if name in self.ods:
             return name
-        logger.error(f"{name} does not exist -- try making it with self.new_ods_instance")
+        logger.error(f"{name} does not exist -- try making it with self.new_ods_instance or providing a different name.")
 
     def read_ods(self, ods_input, name=None):
         """
@@ -147,7 +147,7 @@ class ODS:
         name = self.get_instance_name(name)
         number_of_invalid_records = len(self.ods[name].invalid_records)
         if self.ods[name].number_of_records and number_of_invalid_records == self.ods[name].number_of_records:
-            logger.error(f"All records ({self.ods[name].number_of_records}) were invalid.")
+            logger.warning(f"All records ({self.ods[name].number_of_records}) were invalid.")
         elif number_of_invalid_records:
             logger.warning(f"{number_of_invalid_records} / {self.ods[name].number_of_records} were not valid.")
             for ctr, msg in self.ods[name].invalid_records.items():
@@ -190,7 +190,8 @@ class ODS:
                     if key != 'invalid' and len(val) == 1:
                         self.defaults[key] = list(val)[0]
             else:
-                logger.error(f"Not valid default case: {defaults}")
+                logger.warning(f"Not valid default case: {defaults}")
+                return
 
         logger.info(f"Default values from {defaults}:")
         for key, val in self.defaults.items():
@@ -359,7 +360,8 @@ class ODS:
 
         """
         if cull_by not in ['stale', 'inactive']:
-            logger.error(f"Invalid cull parameter: {cull_by}")
+            logger.warning(f"Invalid cull parameter: {cull_by}")
+            return
         name = self.get_instance_name(name)
         cull_time = tools.make_time(cull_time)
         logger.info(f"Culling ODS for {cull_time} by {cull_by}")
