@@ -17,7 +17,7 @@ class ODS:
     Adding the <working_instance> allows for flexibility, however generally one will only make/use one key denoted 'primary'.
 
     """
-    def __init__(self, version='latest', working_instance=ods_instance.DEFAULT_WORKING_INSTANCE, output='INFO'):
+    def __init__(self, version='latest', working_instance=ods_instance.DEFAULT_WORKING_INSTANCE, output='INFO', quiet=None):
         """
         Parameters
         ----------
@@ -27,9 +27,13 @@ class ODS:
             Key to use for the ods instance in use.
         output : str
             One of the logging levels 'DEBUG', 'INFO', 'WARNING', 'ERROR'
+        quiet : bool, None DEPRECATED
+            Kept for backward compatibility.  Use output
 
         """
         # All this seems to be needed.
+        if quiet is not None:
+            output = 'ERROR' if quiet else 'INFO'
         level = getattr(logging, output.upper())
         logger.setLevel(level)
         ch = logging.StreamHandler()
