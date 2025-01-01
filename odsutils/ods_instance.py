@@ -206,7 +206,7 @@ class ODSInstance:
         sorted_ods = tools.sort_entries(self.entries, [self.standard.start, self.standard.stop], collapse=False, reverse=False)
         #dticks = ((self.latest - self.earliest) / (numticks + 2)).to('second').value  # Not used yet.
 
-        dt = ((self.latest - self.earliest) / numpoints).to('second').value
+        dt = ((self.latest - self.earliest) / (numpoints-1)).to('second').value
         rows = []
         for rec in sorted_ods:
             rows.append(rec[self.standard.source])

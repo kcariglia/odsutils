@@ -31,9 +31,9 @@ class ODS:
             Kept for backward compatibility.  Use output
 
         """
-        # All this seems to be needed.
         if quiet is not None:
             output = 'ERROR' if quiet else 'INFO'
+        # All this seems to be needed.
         level = getattr(logging, output.upper())
         logger.setLevel(level)
         ch = logging.StreamHandler()
