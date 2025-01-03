@@ -48,8 +48,6 @@ class ODS:
         self.defaults = {}
         self.check = ODSCheck(alert=output, standard=self.ods[working_instance].standard)
 
-        logger.info(f"{__name__} ver. {__version__}")
-
     def reset_ods_instances(self, instances='all', version='latest'):
         """
         Resets the internal instance(s).
