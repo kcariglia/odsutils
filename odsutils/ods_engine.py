@@ -4,9 +4,11 @@ from . import ods_instance
 from . import ods_tools as tools
 from . import __version__
 import logging
+from sys import stdout
 
 
 logger = logging.getLogger(__name__)
+logger.setLevel('DEBUG')
 
 
 class ODS:
@@ -33,15 +35,12 @@ class ODS:
         """
         if quiet is not None:
             output = 'ERROR' if quiet else 'INFO'
-        # All this seems to be needed.
-        level = getattr(logging, output.upper())
-        logger.setLevel(level)
-        ch = logging.StreamHandler()
-        ch.setLevel(level)
-        logger.addHandler(ch)
-        formatter = logging.Formatter('%(levelname)s - %(message)s')
-        ch.setFormatter(formatter)
-        logger.addHandler(ch)
+        console_handler = logging.StreamHandler(stdout)
+        console_handler.setLevel(output.upper())
+        console_handler.setFormatter(logging.Formatter("{levelname} - {message}", style='{'))
+        logger.addHandler(console_handler)
+        logger.info(f"{__name__} ver. {__version__}")
+
         # ###
         self.version = version
         self.working_instance = working_instance

@@ -1,9 +1,11 @@
 from . import ods_tools as tools
 from astropy.time import TimeDelta
 import logging
+from sys import stdout
 
 
 logger = logging.getLogger(__name__)
+logger.setLevel('DEBUG')
 
 
 class ODSCheck:
@@ -19,16 +21,11 @@ class ODSCheck:
             Default alert
 
         """
-        # All this seems to be needed.
-        level = getattr(logging, alert.upper())
-        logger.setLevel(level)
-        ch = logging.StreamHandler()
-        ch.setLevel(level)
-        logger.addHandler(ch)
-        formatter = logging.Formatter('%(name)s - %(levelname)s - %(message)s')
-        ch.setFormatter(formatter)
-        logger.addHandler(ch)
-        #
+        console_handler = logging.StreamHandler(stdout)
+        console_handler.setLevel(alert.upper())
+        console_handler.setFormatter(logging.Formatter("{levelname} - {message}", style='{'))
+        logger.addHandler(console_handler)
+
         self.standard = standard
 
     def update_standard(self, standard):
