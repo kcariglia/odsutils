@@ -239,7 +239,6 @@ class ODS:
         active = []
         for i, entry in enumerate(self.ods[self.working_instance].entries):
             if entry['src_start_utc'] <= ctime <= entry['src_end_utc']:
-                print(entry)
                 active.append(i)
         return active
 
