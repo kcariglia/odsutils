@@ -2,6 +2,7 @@ from . import ods_tools as tools
 
 
 LATEST = 'A'
+AVAILABLE_STANDARDS = ['A']
 
 
 class Standard_Version_A:
@@ -71,6 +72,8 @@ class Standard:
             self.version = LATEST
         else:
             self.version = version
+        if self.version not in AVAILABLE_STANDARDS:
+            raise ValueError(f"{self.version} is not an available standard.")
         self.read_version()
 
     def __str__(self):

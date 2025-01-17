@@ -225,6 +225,25 @@ class ODS:
 
         self.ods['from_log'].export2file(logfile, cols=cols, sep=sep)
 
+    def check_active(self, ctime='now', read_from="https://www.seti.org/sites/default/files/HCRO/ods.json"):
+        """Check which entry is active at ctime, if any."""
+        if isinstance(read_from, str):
+            if read_from.startswith("http"):
+                self.read_ods(tools.get_json_url(read_from))
+            else:
+                self.read_ods(read_from)
+        else:
+            logger.info("Not reading new ODS instance for check_active.")
+
+        ctime = tools.make_time(ctime)
+        active = []
+        for i, entry in enumerate(self.ods[self.working_instance].entries):
+            if entry['src_start_utc'] <= ctime <= entry['src_end_utc']:
+                print(entry)
+                active.append(i)
+        return active
+
+
     ##############################################MODIFY#########################################
     # Methods that modify the existing self.ods
 
