@@ -221,7 +221,7 @@ class ODS:
 
         """
         self.new_ods_instance('from_web', reset_if_exists=True)
-        self.read_ods(tools.get_json_url(url), instance_name='from_web')
+        self.read_ods(url, instance_name='from_web')
         self.cull_by_time(instance_name='from_web', cull_by='inactive')
 
         self.new_ods_instance('from_log', reset_if_exists=True)
