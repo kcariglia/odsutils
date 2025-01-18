@@ -70,7 +70,7 @@ class ODS:
             else:
                 logger.warning(f"{instance_name} is not an instance.")
 
-    def new_ods_instance(self, instance_name, version='latest', set_as_working=False):
+    def new_ods_instance(self, instance_name, version='latest', set_as_working=False, reset_if_exists=False):
         """
         Create a blank ODS instance and optionally set as the working instance.
 
@@ -82,19 +82,24 @@ class ODS:
             Standard version to use.
         set_as_working : bool
             Flag to reset the working_instance to this instance_name.
+        reset_if_exists : bool
+            Flag to reset instance if it already exists
 
         """
         if instance_name in self.ods:
-            logger.warning(f"{instance_name} already exists -- try self.reset_ods_instances")
+            if reset_if_exists:
+                self.reset_ods_instances(instances=instance_name)
+            else:
+                logger.warning(f"{instance_name} already exists -- try self.reset_ods_instances or set reset_if_exists flag")
             return
         self.ods[instance_name] = ods_instance.ODSInstance(
             instance_name = instance_name,
             version = version
         )
         if set_as_working:
-            self.update_working_instance(instance_name)
+            self.update_working_instance_name(instance_name)
     
-    def update_working_instance(self, instance_name):
+    def update_working_instance_name(self, instance_name):
         """
         Update the class working_instance instance_name.
         
@@ -215,11 +220,11 @@ class ODS:
             Separator to use in file.
 
         """
-        self.new_ods_instance('from_web')
+        self.new_ods_instance('from_web', reset_if_exists=True)
         self.read_ods(tools.get_json_url(url), instance_name='from_web')
         self.cull_by_time(instance_name='from_web', cull_by='inactive')
 
-        self.new_ods_instance('from_log')
+        self.new_ods_instance('from_log', reset_if_exists=True)
         self.add_from_file(logfile, instance_name='from_log', sep=sep)
         self.merge('from_web', 'from_log', remove_duplicates=True)
 
@@ -228,16 +233,14 @@ class ODS:
     def check_active(self, ctime='now', read_from="https://www.seti.org/sites/default/files/HCRO/ods.json"):
         """Check which entry is active at ctime, if any."""
         if isinstance(read_from, str):
-            if read_from.startswith("http"):
-                self.read_ods(tools.get_json_url(read_from))
-            else:
-                self.read_ods(read_from)
+            self.read_ods(read_from)
         else:
             logger.info("Not reading new ODS instance for check_active.")
 
+        self.new_ods_instance('check_active', reset_if_exists=True)
         ctime = tools.make_time(ctime)
         active = []
-        for i, entry in enumerate(self.ods[self.working_instance].entries):
+        for i, entry in enumerate(self.ods['check_active'].entries):
             if entry['src_start_utc'] <= ctime <= entry['src_end_utc']:
                 active.append(i)
         return active

@@ -84,7 +84,10 @@ class ODSInstance:
             input_ods_data = copy(ods_input)
             self.input = 'dictionary'
         elif isinstance(ods_input, str):
-            input_ods_data = tools.read_json_file(ods_input)
+            if ods_input.startswith('http'):
+                input_ods_data = tools.get_json_url(ods_input)
+            else:
+                input_ods_data = tools.read_json_file(ods_input)
             self.input = ods_input 
         else:
             return False
