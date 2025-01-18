@@ -14,17 +14,17 @@ REF_EARLIEST_TIME = '2020-01-01T00:00'
 class ODSInstance:
     """Light class containing the data, some core classes and metadata -- most handling is done within ODS."""
 
-    def __init__(self, name, version='latest'):
+    def __init__(self, instance_name, version='latest'):
         """
         Parameters
         ----------
-        name : str
+        instance_name : str
             Name of instance -- the key used in ODS
         version : str
             Standard version to use.
 
         """
-        self.name = name
+        self.instance_name = instance_name
         self.standard = Standard(version=version)
         self.input = 'init'
         self.entries = []
@@ -224,7 +224,7 @@ class ODSInstance:
             tickrow[current + stroff] = '0'
         tickrow = ''.join(tickrow)
         dashrow = '-' * (stroff + numpoints + len_label//2)
-        graphhdr = f"-- GRAPH: {self.name} --\n"
+        graphhdr = f"-- GRAPH: {self.instance_name} --\n"
         print(f"{dashrow}\n{graphhdr}\n{labelrow}\n{tickrow}")
         for rec in sorted_ods:
             row = ['.'] * numpoints

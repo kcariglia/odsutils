@@ -64,7 +64,7 @@ if args.data_file:
     ods.add_from_file(data_file_name=args.data_file, sep=args.sep, replace_char=args.replace_char, header_map=args.header_map)
 
 if args.src_end_utc is not None:  # Assume that this one will always be used outside of defaults
-    ods.add_new_record_from_namespace(ns=args)
+    ods.add_from_namespace(ns=args)
 
 if args.time_cull:
     ods.cull_by_time(cull_time=args.time_cull, cull_by=args.cull_by)
