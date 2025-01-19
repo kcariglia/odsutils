@@ -37,7 +37,7 @@ class ODS:
             output = 'ERROR' if quiet else 'INFO'
         console_handler = logging.StreamHandler(stdout)
         console_handler.setLevel(output.upper())
-        console_handler.setFormatter(logging.Formatter("{levelname} - {message}", style='{'))
+        console_handler.setFormatter(logging.Formatter("{levelname} - {module} - {message}", style='{'))
         logger.addHandler(console_handler)
         logger.info(f"{__name__} ver. {__version__}")
 
