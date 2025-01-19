@@ -6,7 +6,8 @@ ap = argparse.ArgumentParser()
 ap.add_argument('-o', '--ods_file', help="Name of ods json file to read.", default=None)
 ap.add_argument('-d', '--defaults', help="Name of json file holding default values or descriptor", default=None)
 ap.add_argument('--version', help="Version to use", default='latest')
-ap.add_argument('--output', help="Logging output level", default='INFO')
+ap.add_argument('--output', help="Console logging output level", default='INFO')
+ap.add_argument('--filelog', help="File logging output level", default=False)
 # Data file options
 ap.add_argument('-f', '--data_file', help="Name of data file to read", default=None)
 ap.add_argument('--sep', help="Separator for the data file - 'auto' tries to determine from first line", default='auto')
@@ -50,7 +51,7 @@ ap.add_argument('--notes', help="ODS field", default=None)
 
 args = ap.parse_args()
 
-ods = ods_engine.ODS(version=args.version, output=args.output.upper())
+ods = ods_engine.ODS(version=args.version, output=args.output.upper(), filelog=args.filelog)
 if args.std_show:
     print(ods.ods[ods.working_instance].standard)
 
