@@ -1,7 +1,7 @@
 from . import ods_tools as tools
+from . import logger_setup, __version__
 from astropy.time import TimeDelta
 import logging
-from sys import stdout
 
 
 logger = logging.getLogger(__name__)
@@ -21,17 +21,14 @@ class ODSCheck:
             Default alert
 
         """
-        console_handler = logging.StreamHandler(stdout)
-        console_handler.setLevel(alert.upper())
-        console_handler.setFormatter(logging.Formatter("{levelname} - {message}", style='{'))
-        logger.addHandler(console_handler)
-
+        logger_setup.setup(logger, output=alert, file_logging=False, log_filename=logger_setup.LOG_FILENAME, path=None)
+        logger.info(f"{__name__} ver. {__version__}")
         self.standard = standard
 
-    def update_standard(self, standard):
+    def change_standard(self, standard):
         self.standard = standard
     
-    def is_same(self, rec1, rec2, standard=None):
+    def is_same(self, rec1, rec2, fields2check='all', standard=None):
         """
         Checks to see if two records are equal.
 
@@ -50,7 +47,9 @@ class ODSCheck:
 
         """
         standard = self.standard if standard is None else standard
-        for key in standard.ods_fields:
+        if fields2check == 'all':
+            fields2check = standard.ods_fields
+        for key in fields2check:
             try:
                 if str(rec1[key]) != str(rec2[key]):
                     return False
@@ -58,7 +57,7 @@ class ODSCheck:
                 return False
         return True
 
-    def is_duplicate(self, ods, record):
+    def is_duplicate(self, ods, record, fields2check='all'):
         """
         Checks the ods for the record.
 
@@ -75,7 +74,7 @@ class ODSCheck:
 
         """
         for entry in ods.entries:
-            if self.is_same(entry, record, standard=ods.standard):
+            if self.is_same(entry, record, fields2check==fields2check, standard=ods.standard):
                 return True
         return False
 

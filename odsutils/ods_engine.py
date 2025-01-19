@@ -1,10 +1,8 @@
 from copy import copy
 from .ods_check import ODSCheck
-from . import ods_instance
+from . import ods_instance, logger_setup, __version__
 from . import ods_tools as tools
-from . import __version__
 import logging
-from sys import stdout
 
 
 logger = logging.getLogger(__name__)
@@ -35,10 +33,7 @@ class ODS:
         """
         if quiet is not None:
             output = 'ERROR' if quiet else 'INFO'
-        console_handler = logging.StreamHandler(stdout)
-        console_handler.setLevel(output.upper())
-        console_handler.setFormatter(logging.Formatter("{levelname} - {module} - {message}", style='{'))
-        logger.addHandler(console_handler)
+        logger_setup.setup(logger, output=output, file_logging=False, log_filename=logger_setup.LOG_FILENAME, path=None)
         logger.info(f"{__name__} ver. {__version__}")
 
         # ###
@@ -47,25 +42,6 @@ class ODS:
         self.new_ods_instance(working_instance, version=version, set_as_working=True)
         self.defaults = {}
         self.check = ODSCheck(alert=output, standard=self.ods[working_instance].standard)
-
-    def reset_ods_instances(self, instances='all', version='latest'):
-        """
-        DEPRECATED! Resets the internal instance(s) -- use new_ods_instance
-
-        Parameters
-        ----------
-        instances : str, list
-            Instances to reset -- 'all'/list/csv-list
-        version : str
-            Standard version oto use
-
-        """
-        instances = list(self.ods.keys()) if instances == 'all' else tools.listify(instances)
-        for instance_name in tools.listify(instances):
-            if instance_name in self.ods:
-                self.ods[instance_name] = self.new_ods_instance(instance_name=instance_name, version=version)
-            else:
-                logger.warning(f"{instance_name} is not an instance.")
 
     def new_ods_instance(self, instance_name, version='latest', set_as_working=False):
         """
