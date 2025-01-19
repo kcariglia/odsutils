@@ -13,7 +13,7 @@ class ODSCheck:
     Utilities to check ODS instances/records.
 
     """
-    def __init__(self, alert='INFO', standard=None):
+    def __init__(self, alert='INFO', standard=None, filelog=False):
         """
         Parameter
         ---------
@@ -21,7 +21,7 @@ class ODSCheck:
             Default alert
 
         """
-        logger_setup.setup(logger, output=alert, file_logging=False, log_filename=logger_setup.LOG_FILENAME, path=None)
+        self.logset = logger_setup.Logger(logger, conlog=alert, filelog=filelog, log_filename=logger_setup.LOG_FILENAME, path=None)
         logger.info(f"{__name__} ver. {__version__}")
         self.standard = standard
 
