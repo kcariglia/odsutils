@@ -43,14 +43,14 @@ class ODS:
 
         # ###
         self.version = version
-        self.working_instance = working_instance
-        self.reset_ods_instances('all', version=version)
+        self.ods = {}
+        self.new_ods_instance(working_instance, version=version, set_as_working=True)
         self.defaults = {}
         self.check = ODSCheck(alert=output, standard=self.ods[working_instance].standard)
 
     def reset_ods_instances(self, instances='all', version='latest'):
         """
-        Resets the internal instance(s).
+        DEPRECATED! Resets the internal instance(s) -- use new_ods_instance
 
         Parameters
         ----------
@@ -60,17 +60,14 @@ class ODS:
             Standard version oto use
 
         """
-        if instances == 'all':
-            self.ods = {}
-            self.new_ods_instance(instance_name=self.working_instance, version=version)
-            return
+        instances = list(self.ods.keys()) if instances == 'all' else tools.listify(instances)
         for instance_name in tools.listify(instances):
             if instance_name in self.ods:
                 self.ods[instance_name] = self.new_ods_instance(instance_name=instance_name, version=version)
             else:
                 logger.warning(f"{instance_name} is not an instance.")
 
-    def new_ods_instance(self, instance_name, version='latest', set_as_working=False, reset_if_exists=False):
+    def new_ods_instance(self, instance_name, version='latest', set_as_working=False):
         """
         Create a blank ODS instance and optionally set as the working instance.
 
@@ -82,16 +79,8 @@ class ODS:
             Standard version to use.
         set_as_working : bool
             Flag to reset the working_instance to this instance_name.
-        reset_if_exists : bool
-            Flag to reset instance if it already exists
 
         """
-        if instance_name in self.ods:
-            if reset_if_exists:
-                self.reset_ods_instances(instances=instance_name)
-            else:
-                logger.warning(f"{instance_name} already exists -- try self.reset_ods_instances or set reset_if_exists flag")
-            return
         self.ods[instance_name] = ods_instance.ODSInstance(
             instance_name = instance_name,
             version = version
@@ -109,8 +98,11 @@ class ODS:
             Name of instance
 
         """
-        self.working_instance = instance_name
-        logger.info(f"The new ODS working instance is {self.working_instance}")
+        if instance_name in self.ods.keys():
+            self.working_instance = instance_name
+            logger.info(f"The ODS working instance is {self.working_instance}")
+        else:
+            logger.warning(f"ODS instance {instance_name} does not exist.")
 
     def get_instance_name(self, instance_name=None):
         """
@@ -220,11 +212,11 @@ class ODS:
             Separator to use in file.
 
         """
-        self.new_ods_instance('from_web', reset_if_exists=True)
+        self.new_ods_instance('from_web')
         self.read_ods(url, instance_name='from_web')
         self.cull_by_time(instance_name='from_web', cull_by='inactive')
 
-        self.new_ods_instance('from_log', reset_if_exists=True)
+        self.new_ods_instance('from_log')
         self.add_from_file(logfile, instance_name='from_log', sep=sep)
         self.merge('from_web', 'from_log', remove_duplicates=True)
 
@@ -232,12 +224,11 @@ class ODS:
 
     def check_active(self, ctime='now', read_from="https://www.seti.org/sites/default/files/HCRO/ods.json"):
         """Check which entry is active at ctime, if any."""
+        self.new_ods_instance(instance_name='check_active')
         if isinstance(read_from, str):
-            self.read_ods(read_from)
+            self.read_ods(read_from, instance_name='check_active')
         else:
             logger.info("Not reading new ODS instance for check_active.")
-
-        self.new_ods_instance('check_active', reset_if_exists=True)
         ctime = tools.make_time(ctime)
         active = []
         for i, entry in enumerate(self.ods['check_active'].entries):
