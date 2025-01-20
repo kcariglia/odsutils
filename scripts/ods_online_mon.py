@@ -11,5 +11,5 @@ ap.add_argument('--cols', help="Columns to output to monitor file -- 'all' or cs
 ap.add_argument('--output', help="Logging output level", default='INFO')
 args = ap.parse_args()
 
-ods = ods_engine.ODS(version=args.version, output=args.output.upper())
+ods = ods_engine.ODS(version=args.version, output=args.output)
 ods.online_ods_monitor(url=args.url, logfile=args.logfile, cols=args.cols)
