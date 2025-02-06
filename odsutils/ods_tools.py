@@ -187,7 +187,7 @@ def make_time(t):
     if t == 'now':
         return Time.now()
     try:
-        return Time(t)
+        return Time(t).to_value('iso')
     except ValueError:
         print("NEED TO DO SOME CHECKING, E.G. timezone aware etc")
         raise ValueError(f"Error in make_time {t}")
