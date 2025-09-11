@@ -583,7 +583,7 @@ class ODS:
         elif data_file_name.endswith('.json'):
             ods_input = tools.read_json_file(data_file_name)
         else:
-            obs_list = tools.read_data_file(data_file_name, sep=sep, replace_char=replace_char, header_map=header_map, instance_name=instance_name)
+            obs_list = tools.read_data_file(data_file_name, sep=sep, replace_char=replace_char, header_map=header_map)#, instance_name=instance_name)
             ods_input = []
             for _, row in obs_list.iterrows():
                 ods_input.append(row.to_dict())
